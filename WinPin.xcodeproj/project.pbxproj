@@ -1,0 +1,482 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0D70E1022C00000100A00001 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D70E0022C00000100A00001 /* AppDelegate.swift */; };
+		0D70E1032C00000100A00001 /* AccessibilityPermissionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D70E0032C00000100A00001 /* AccessibilityPermissionManager.swift */; };
+		0D70E1042C00000100A00001 /* AXWindowProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D70E0042C00000100A00001 /* AXWindowProvider.swift */; };
+		0D70E1052C00000100A00001 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D70E0052C00000100A00001 /* Models.swift */; };
+		0D70E1062C00000100A00001 /* PinManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D70E0062C00000100A00001 /* PinManager.swift */; };
+		0D70E1072C00000100A00001 /* BorderOverlayManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D70E0072C00000100A00001 /* BorderOverlayManager.swift */; };
+		0D70E1082C00000100A00001 /* HotKeyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D70E0082C00000100A00001 /* HotKeyManager.swift */; };
+		0D70E1092C00000100A00001 /* MenuBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D70E0092C00000100A00001 /* MenuBarController.swift */; };
+		0D70E10A2C00000100A00001 /* AppPreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D70E00B2C00000100A00001 /* AppPreferences.swift */; };
+		0D70E10B2C00000100A00001 /* SettingsWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D70E00C2C00000100A00001 /* SettingsWindowController.swift */; };
+		0D70E10C2C00000100A00001 /* AppLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D70E00D2C00000100A00001 /* AppLogger.swift */; };
+		0D70E10D2C00000100A00001 /* AppIconFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D70E00E2C00000100A00001 /* AppIconFactory.swift */; };
+		0D70E10E2C00000100A00001 /* LaunchMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D70E00F2C00000100A00001 /* LaunchMode.swift */; };
+		0D70E10F2C00000100A00001 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D70E0102C00000100A00002 /* main.swift */; };
+		0D70E1112C00000100A00001 /* PinManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D70E0112C00000100A00001 /* PinManagerTests.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		0D70E4322C00000100A00001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0D70E7012C00000100A00001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 0D70E4012C00000100A00001;
+			remoteInfo = WinPin;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		0D70E0002C00000100A00001 /* WinPin.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WinPin.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		0D70E0102C00000100A00001 /* WinPinTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WinPinTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		0D70E0022C00000100A00001 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		0D70E0032C00000100A00001 /* AccessibilityPermissionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityPermissionManager.swift; sourceTree = "<group>"; };
+		0D70E0042C00000100A00001 /* AXWindowProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AXWindowProvider.swift; sourceTree = "<group>"; };
+		0D70E0052C00000100A00001 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		0D70E0062C00000100A00001 /* PinManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PinManager.swift; sourceTree = "<group>"; };
+		0D70E0072C00000100A00001 /* BorderOverlayManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BorderOverlayManager.swift; sourceTree = "<group>"; };
+		0D70E0082C00000100A00001 /* HotKeyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotKeyManager.swift; sourceTree = "<group>"; };
+		0D70E0092C00000100A00001 /* MenuBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarController.swift; sourceTree = "<group>"; };
+		0D70E00A2C00000100A00001 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		0D70E00B2C00000100A00001 /* AppPreferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppPreferences.swift; sourceTree = "<group>"; };
+		0D70E00C2C00000100A00001 /* SettingsWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsWindowController.swift; sourceTree = "<group>"; };
+		0D70E00D2C00000100A00001 /* AppLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLogger.swift; sourceTree = "<group>"; };
+		0D70E00E2C00000100A00001 /* AppIconFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppIconFactory.swift; sourceTree = "<group>"; };
+		0D70E00F2C00000100A00001 /* LaunchMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchMode.swift; sourceTree = "<group>"; };
+		0D70E0102C00000100A00002 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		0D70E0112C00000100A00001 /* PinManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PinManagerTests.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		0D70E2012C00000100A00001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		0D70E2212C00000100A00001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		0D70E3012C00000100A00001 = {
+			isa = PBXGroup;
+			children = (
+				0D70E3022C00000100A00001 /* WinPin */,
+				0D70E3042C00000100A00001 /* WinPinTests */,
+				0D70E3032C00000100A00001 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		0D70E3022C00000100A00001 /* WinPin */ = {
+			isa = PBXGroup;
+			children = (
+				0D70E00A2C00000100A00001 /* Info.plist */,
+				0D70E0022C00000100A00001 /* AppDelegate.swift */,
+				0D70E0032C00000100A00001 /* AccessibilityPermissionManager.swift */,
+				0D70E0042C00000100A00001 /* AXWindowProvider.swift */,
+				0D70E0052C00000100A00001 /* Models.swift */,
+				0D70E0062C00000100A00001 /* PinManager.swift */,
+				0D70E0072C00000100A00001 /* BorderOverlayManager.swift */,
+				0D70E0082C00000100A00001 /* HotKeyManager.swift */,
+				0D70E0092C00000100A00001 /* MenuBarController.swift */,
+				0D70E00B2C00000100A00001 /* AppPreferences.swift */,
+				0D70E00C2C00000100A00001 /* SettingsWindowController.swift */,
+				0D70E00D2C00000100A00001 /* AppLogger.swift */,
+				0D70E00E2C00000100A00001 /* AppIconFactory.swift */,
+				0D70E00F2C00000100A00001 /* LaunchMode.swift */,
+				0D70E0102C00000100A00002 /* main.swift */,
+			);
+			path = WinPin;
+			sourceTree = "<group>";
+		};
+		0D70E3042C00000100A00001 /* WinPinTests */ = {
+			isa = PBXGroup;
+			children = (
+				0D70E0112C00000100A00001 /* PinManagerTests.swift */,
+			);
+			path = WinPinTests;
+			sourceTree = "<group>";
+		};
+		0D70E3032C00000100A00001 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				0D70E0002C00000100A00001 /* WinPin.app */,
+				0D70E0102C00000100A00001 /* WinPinTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		0D70E4012C00000100A00001 /* WinPin */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 0D70E8012C00000100A00001 /* Build configuration list for PBXNativeTarget "WinPin" */;
+			buildPhases = (
+				0D70E5012C00000100A00001 /* Sources */,
+				0D70E2012C00000100A00001 /* Frameworks */,
+				0D70E6012C00000100A00001 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = WinPin;
+			productName = WinPin;
+			productReference = 0D70E0002C00000100A00001 /* WinPin.app */;
+			productType = "com.apple.product-type.application";
+		};
+		0D70E4212C00000100A00001 /* WinPinTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 0D70E8212C00000100A00001 /* Build configuration list for PBXNativeTarget "WinPinTests" */;
+			buildPhases = (
+				0D70E5212C00000100A00001 /* Sources */,
+				0D70E2212C00000100A00001 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				0D70E4312C00000100A00001 /* PBXTargetDependency */,
+			);
+			name = WinPinTests;
+			productName = WinPinTests;
+			productReference = 0D70E0102C00000100A00001 /* WinPinTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		0D70E7012C00000100A00001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1600;
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					0D70E4012C00000100A00001 = {
+						CreatedOnToolsVersion = 16.0;
+					};
+					0D70E4212C00000100A00001 = {
+						CreatedOnToolsVersion = 16.0;
+						TestTargetID = 0D70E4012C00000100A00001;
+					};
+				};
+			};
+			buildConfigurationList = 0D70E7022C00000100A00001 /* Build configuration list for PBXProject "WinPin" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 0D70E3012C00000100A00001;
+			productRefGroup = 0D70E3032C00000100A00001 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				0D70E4012C00000100A00001 /* WinPin */,
+				0D70E4212C00000100A00001 /* WinPinTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		0D70E6012C00000100A00001 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		0D70E5012C00000100A00001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0D70E1022C00000100A00001 /* AppDelegate.swift in Sources */,
+				0D70E1032C00000100A00001 /* AccessibilityPermissionManager.swift in Sources */,
+				0D70E1042C00000100A00001 /* AXWindowProvider.swift in Sources */,
+				0D70E1052C00000100A00001 /* Models.swift in Sources */,
+				0D70E1062C00000100A00001 /* PinManager.swift in Sources */,
+				0D70E1072C00000100A00001 /* BorderOverlayManager.swift in Sources */,
+				0D70E1082C00000100A00001 /* HotKeyManager.swift in Sources */,
+				0D70E1092C00000100A00001 /* MenuBarController.swift in Sources */,
+				0D70E10A2C00000100A00001 /* AppPreferences.swift in Sources */,
+				0D70E10B2C00000100A00001 /* SettingsWindowController.swift in Sources */,
+				0D70E10C2C00000100A00001 /* AppLogger.swift in Sources */,
+				0D70E10D2C00000100A00001 /* AppIconFactory.swift in Sources */,
+				0D70E10E2C00000100A00001 /* LaunchMode.swift in Sources */,
+				0D70E10F2C00000100A00001 /* main.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		0D70E5212C00000100A00001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0D70E1112C00000100A00001 /* PinManagerTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		0D70E4312C00000100A00001 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 0D70E4012C00000100A00001 /* WinPin */;
+			targetProxy = 0D70E4322C00000100A00001 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		0D70E9012C00000100A00001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		0D70E9022C00000100A00001 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+			};
+			name = Release;
+		};
+		0D70E9032C00000100A00001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = WinPin/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.akis.WinPin;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		0D70E9042C00000100A00001 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = WinPin/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.akis.WinPin;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		0D70E9232C00000100A00001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.akis.WinPinTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/WinPin.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/WinPin";
+				WRAPPER_EXTENSION = xctest;
+			};
+			name = Debug;
+		};
+		0D70E9242C00000100A00001 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.akis.WinPinTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/WinPin.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/WinPin";
+				WRAPPER_EXTENSION = xctest;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		0D70E7022C00000100A00001 /* Build configuration list for PBXProject "WinPin" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0D70E9012C00000100A00001 /* Debug */,
+				0D70E9022C00000100A00001 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		0D70E8012C00000100A00001 /* Build configuration list for PBXNativeTarget "WinPin" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0D70E9032C00000100A00001 /* Debug */,
+				0D70E9042C00000100A00001 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		0D70E8212C00000100A00001 /* Build configuration list for PBXNativeTarget "WinPinTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0D70E9232C00000100A00001 /* Debug */,
+				0D70E9242C00000100A00001 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 0D70E7012C00000100A00001 /* Project object */;
+}
