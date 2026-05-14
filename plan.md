@@ -46,7 +46,7 @@ com.akis.WinPin
 - Use Accessibility APIs for reading and manipulating other apps' windows.
 - Use AppKit `NSStatusItem` for the menu bar item.
 - Use a border-only `NSPanel` overlay to show pinned window state.
-- Tier 1 uses a fixed default global keyboard shortcut. User-configurable shortcut recording is deferred to Tier 3.
+- Tier 1 uses a fixed default global keyboard shortcut. Shortcut recording/conflict UI is promoted to Tier 1.5 because fixed shortcuts are a real collision risk for window-management users.
 - The app icon and menu bar glyph should use the pin symbol `📌`.
 
 ## 4. Hard Constraints and Realistic macOS Limitations
@@ -98,7 +98,7 @@ Space support is “best effort”.
 
 ### 4.5 Shortcut Conflict Detection Limitation
 
-Tier 3 settings UI must let the user assign a shortcut by pressing keys. Tier 1 keeps the fixed default shortcut `Control + Option + Command + P`.
+Tier 1 keeps the fixed default shortcut `Control + Option + Command + T`. Tier 1.5 settings UI must let the user assign a shortcut by pressing keys and must show registration failure clearly.
 
 Required behavior:
 
@@ -117,6 +117,7 @@ Important limitation:
 - If registration fails, treat it as unavailable.
 - If registration succeeds, treat it as available.
 - Do not claim to identify the exact app using the shortcut unless the implementation has reliable evidence. The UI may say “macOS or another app”, not a specific app name.
+- Known conflict family: Hammerspoon ShiftIt defaults use `Control + Option + Command` with arrows, `1`, `2`, `3`, `4`, `M`, `F`, `Z`, `C`, `N`, `P`, `=`, and `-`. Avoid these occupied combinations for WinPin defaults.
 
 ## 5. Required Features
 
@@ -220,7 +221,7 @@ Behavior:
 
 ### 5.6 User-Assignable Shortcut in Settings
 
-Tier: **Tier 3**. Do not block the Tier 1 MVP on this feature. Tier 1 uses the fixed default shortcut `Control + Option + Command + P`.
+Tier: **Tier 1.5**. Fixed shortcuts are a real collision risk for window-management users. Tier 1 uses the fixed default shortcut `Control + Option + Command + T`; Tier 1.5 should add shortcut recording, current-shortcut display, persistence, and registration-failure UI.
 
 Add a settings screen where the user can assign the global shortcut by pressing the desired key combination.
 
@@ -236,7 +237,7 @@ Requirements:
 Suggested default shortcut:
 
 ```text
-Control + Option + Command + P
+Control + Option + Command + T
 ```
 
 The implementation may use Carbon `RegisterEventHotKey` for global hotkey registration, or another reliable native equivalent. The validation path and actual registration path should be the same or equivalent so that settings validation reflects runtime behavior.
@@ -279,7 +280,7 @@ Responsibilities:
 - Initialize managers.
 - Check Accessibility permission.
 - Register the fixed Tier 1 global shortcut.
-- Tier 3: load a saved user-configured shortcut when shortcut recording exists.
+- Tier 1.5: load a saved user-configured shortcut when shortcut recording exists.
 
 ### 6.2 `MenuBarController`
 
@@ -365,9 +366,9 @@ Responsibilities:
 - Register global shortcut.
 - Unregister previous shortcut.
 - Invoke PinManager toggle action when triggered.
-- Tier 1: register the fixed default shortcut `Control + Option + Command + P`.
-- Tier 3: validate shortcut availability by attempting registration.
-- Tier 3: persist accepted shortcut.
+- Tier 1: register the fixed default shortcut `Control + Option + Command + T`.
+- Tier 1.5: validate shortcut availability by attempting registration.
+- Tier 1.5: persist accepted shortcut.
 
 Suggested model:
 
@@ -381,7 +382,7 @@ struct HotKey: Codable, Equatable {
 
 Validation behavior:
 
-Tier: **Tier 3**.
+Tier: **Tier 1.5**.
 
 ```text
 Input candidate shortcut
@@ -392,7 +393,7 @@ Input candidate shortcut
 
 ### 6.8 `SettingsWindowController`
 
-Tier: **Tier 3**.
+Tier: **Tier 1.5**.
 
 Responsibilities:
 
@@ -400,6 +401,7 @@ Responsibilities:
 - Let user record a new shortcut.
 - Show validation errors.
 - Save accepted shortcut.
+- Also show registration failures in the menu with an owner-agnostic message.
 
 Settings UI copy for shortcut conflict:
 
@@ -419,7 +421,7 @@ Use `UserDefaults` for simple preferences.
 
 Persist:
 
-- Tier 3: assigned global shortcut.
+- Tier 1.5: assigned global shortcut.
 - Optional: launch at login preference.
 
 Do not persist pinned windows across app relaunch in MVP unless explicitly implemented later. AX window references are not stable across sessions.
@@ -469,7 +471,7 @@ Do not implement these in the first version unless the core MVP is complete:
 - Persisting pinned windows across reboot/relaunch.
 - App Store sandbox compliance.
 - Complex window picker UI.
-- User-configurable shortcut recorder and shortcut conflict UI; this is Tier 3, not Tier 1 MVP.
+- Hammerspoon companion Spoon/plugin integration; this is Tier 3 and must not replace the native app.
 
 ## 10. Acceptance Criteria
 
@@ -539,9 +541,16 @@ Tier 1 MVP scope:
 - [x] Timer-based raise maintenance.
 - [x] Yellow border overlay.
 - [x] Pinned window list.
-- [x] Fixed default global shortcut: `Control + Option + Command + P`.
+- [x] Fixed default global shortcut: `Control + Option + Command + T`.
 - [x] Automatic stale-window removal when a pinned window is closed/unavailable.
 - [x] Basic tests for core pin state behavior where practical.
+
+Tier 1.5 scope:
+
+- [ ] Configurable Settings shortcut recorder.
+- [ ] Shortcut conflict validation UI by attempting registration.
+- [ ] Shortcut persistence beyond the fixed Tier 1 default.
+- [ ] Current shortcut display in Settings and menu diagnostics.
 
 Tier 2 scope:
 
@@ -550,9 +559,7 @@ Tier 2 scope:
 
 Tier 3 scope:
 
-- [ ] Configurable Settings shortcut recorder.
-- [ ] Shortcut conflict validation UI by attempting registration.
-- [ ] Shortcut persistence beyond the fixed Tier 1 default.
+- [ ] Optional Hammerspoon companion Spoon/plugin integration.
 
 ### 11.2 First Slice Progress
 
@@ -567,7 +574,7 @@ Tier 3 scope:
 - [x] Add yellow border overlay panel.
 - [x] Add pinned window list with app icon/name/window title.
 - [x] Add fixed default global shortcut.
-- [ ] Add configurable Settings shortcut recorder. **Tier 3; not required for Tier 1 MVP.**
+- [ ] Add configurable Settings shortcut recorder. **Tier 1.5; promoted because fixed shortcuts collide with common window-management tools.**
 - [x] Add stale window cleanup.
 - [x] Add basic tests for core pin state behavior.
 
@@ -585,8 +592,8 @@ Tier 3 scope:
 - [x] Add stale window cleanup.
 - [x] Add basic tests where practical.
 - [ ] Tier 2: refine multi-window overlay ordering/stacking.
-- [ ] Tier 3: add settings window with shortcut recorder.
-- [ ] Tier 3: add shortcut conflict validation by attempting registration.
+- [ ] Tier 1.5: add settings window with shortcut recorder.
+- [ ] Tier 1.5: add shortcut conflict validation by attempting registration.
 
 ## 12. Reference APIs
 

@@ -190,7 +190,7 @@ final class MenuBarController: NSObject {
     }
 
     private func addStatusItems(to menu: NSMenu) {
-        let shortcutStatus = hotKeyManager.registrationError ?? "Shortcut: Control + Option + Command + P"
+        let shortcutStatus = hotKeyManager.registrationError ?? "Shortcut: \(HotKeyManager.defaultShortcutDisplayName)"
         let shortcutItem = NSMenuItem(title: shortcutStatus, action: nil, keyEquivalent: "")
         shortcutItem.isEnabled = false
         menu.addItem(shortcutItem)

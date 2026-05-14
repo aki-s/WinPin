@@ -5,6 +5,8 @@ private let hotKeyEventSignature = OSType(UInt32(UInt8(ascii: "W")) << 24 | UInt
 private let hotKeyEventID = UInt32(1)
 
 final class HotKeyManager {
+    static let defaultShortcutDisplayName = "Control + Option + Command + T"
+
     private var eventHotKeyRef: EventHotKeyRef?
     private var eventHandlerRef: EventHandlerRef?
     private var globalKeyMonitor: Any?
@@ -26,7 +28,7 @@ final class HotKeyManager {
         if installHandlerIfNeeded() {
             let hotKeyID = EventHotKeyID(signature: hotKeyEventSignature, id: hotKeyEventID)
             let modifiers = UInt32(controlKey | optionKey | cmdKey)
-            let keyCode = UInt32(kVK_ANSI_P)
+            let keyCode = UInt32(kVK_ANSI_T)
             status = RegisterEventHotKey(keyCode, modifiers, hotKeyID, GetEventDispatcherTarget(), 0, &eventHotKeyRef)
         } else {
             status = OSStatus(eventNotHandledErr)
@@ -35,7 +37,7 @@ final class HotKeyManager {
         if status == noErr {
             registrationError = nil
         } else {
-            registrationError = "Control + Option + Command + P could not be registered with Carbon; Accessibility key monitor fallback is active."
+            registrationError = "WinPin shortcut could not be registered. Another app or macOS may already be using it."
             eventHotKeyRef = nil
         }
     }
@@ -140,7 +142,7 @@ final class HotKeyManager {
     }
 
     private func matchesDefaultShortcut(_ event: NSEvent) -> Bool {
-        guard event.keyCode == UInt16(kVK_ANSI_P) else {
+        guard event.keyCode == UInt16(kVK_ANSI_T) else {
             return false
         }
 

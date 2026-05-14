@@ -12,7 +12,7 @@ Implemented:
 - Accessibility permission check and menu diagnostics
 - Pin/unpin current focused window from the menu
 - Unpin pinned windows from the menu list
-- Fixed global shortcut: `Control + Option + Command + P`
+- Fixed global shortcut: `Control + Option + Command + T`
 - Timer-based `kAXRaiseAction` maintenance loop
 - Yellow non-interactive `NSPanel` border overlay
 - Pinned window list with app icon, app name, and window title
@@ -114,4 +114,6 @@ scripts/build-debug-reset-accessibility.sh
 - Treat Spaces and fullscreen behavior as best effort.
 - Shortcut conflict detection for the fixed shortcut is based on whether Carbon hotkey registration succeeds.
 - The fixed shortcut installs both Carbon hotkey registration and an `NSEvent` key monitor fallback because menu bar apps can be sensitive to Carbon hotkey delivery differences. Hotkey delivery is throttled to avoid double toggles when both paths fire.
+- If the fixed shortcut cannot be registered, the menu reports that another app or macOS may already be using it. WinPin must not claim to know the owning app unless there is reliable evidence.
 - Future configurable shortcuts should validate candidates using the same registration path and keep the previous working shortcut on failure.
+- Known conflict family: Hammerspoon ShiftIt defaults use `Control + Option + Command` with arrows, `1`, `2`, `3`, `4`, `M`, `F`, `Z`, `C`, `N`, `P`, `=`, and `-`. Avoid these occupied combinations for WinPin defaults.
