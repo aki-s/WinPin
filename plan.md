@@ -46,7 +46,7 @@ com.akis.WinPin
 - Use Accessibility APIs for reading and manipulating other apps' windows.
 - Use AppKit `NSStatusItem` for the menu bar item.
 - Use a border-only `NSPanel` overlay to show pinned window state.
-- Use a user-configurable global keyboard shortcut.
+- Tier 1 uses a fixed default global keyboard shortcut. User-configurable shortcut recording is deferred to Tier 3.
 - The app icon and menu bar glyph should use the pin symbol `📌`.
 
 ## 4. Hard Constraints and Realistic macOS Limitations
@@ -86,7 +86,7 @@ macOS does not provide a stable public API to mark another app's existing window
 - Keep a reference to the selected `AXUIElement` window.
 - Periodically and/or reactively call `kAXRaiseAction` on that window.
 - Track the window frame and update a visual overlay.
-- If the target app/window disappears, mark the pin as stale and remove or disable it.
+- If the target app/window disappears, treat the pin as stale and remove it automatically.
 
 ### 4.4 Space / Fullscreen Support
 
@@ -98,7 +98,7 @@ Space support is “best effort”.
 
 ### 4.5 Shortcut Conflict Detection Limitation
 
-The settings UI must let the user assign a shortcut by pressing keys.
+Tier 3 settings UI must let the user assign a shortcut by pressing keys. Tier 1 keeps the fixed default shortcut `Control + Option + Command + P`.
 
 Required behavior:
 
@@ -198,13 +198,15 @@ Each list item must show:
 
 If a pinned window becomes unavailable:
 
-- Show it as stale/unavailable, or remove it automatically.
+- Treat it as stale and remove it automatically.
+- Remove its overlay immediately.
 - Do not crash.
 
 When multiple windows are pinned:
 
 - Later pins win.
 - Raise pinned windows in pin order so the most recently pinned window is raised last.
+- Overlay stacking/order polish is Tier 2; for MVP, keep overlays correct and non-interactive without over-optimizing visual z-order.
 
 ### 5.5 Global Keyboard Shortcut Toggle
 
@@ -218,13 +220,15 @@ Behavior:
 
 ### 5.6 User-Assignable Shortcut in Settings
 
+Tier: **Tier 3**. Do not block the Tier 1 MVP on this feature. Tier 1 uses the fixed default shortcut `Control + Option + Command + P`.
+
 Add a settings screen where the user can assign the global shortcut by pressing the desired key combination.
 
 Requirements:
 
 - Provide a shortcut recorder UI.
 - Record modifier keys and main key.
-- Require at least one meaningful modifier unless there is a strong reason not to.
+- Require at least one meaningful modifier unless there is a strong reason not to. `Command` is meaningful; `Shift` alone is not meaningful and must not be accepted by itself.
 - Validate by attempting global hotkey registration.
 - If the shortcut is unavailable, reject the assignment and show an error.
 - If available, save it to UserDefaults and use it immediately.
@@ -274,8 +278,8 @@ Responsibilities:
 - Initialize menu bar UI.
 - Initialize managers.
 - Check Accessibility permission.
-- Load saved shortcut.
-- Register global shortcut.
+- Register the fixed Tier 1 global shortcut.
+- Tier 3: load a saved user-configured shortcut when shortcut recording exists.
 
 ### 6.2 `MenuBarController`
 
@@ -360,9 +364,10 @@ Responsibilities:
 
 - Register global shortcut.
 - Unregister previous shortcut.
-- Validate shortcut availability by attempting registration.
 - Invoke PinManager toggle action when triggered.
-- Persist accepted shortcut.
+- Tier 1: register the fixed default shortcut `Control + Option + Command + P`.
+- Tier 3: validate shortcut availability by attempting registration.
+- Tier 3: persist accepted shortcut.
 
 Suggested model:
 
@@ -376,6 +381,8 @@ struct HotKey: Codable, Equatable {
 
 Validation behavior:
 
+Tier: **Tier 3**.
+
 ```text
 Input candidate shortcut
 → temporarily attempt to register it
@@ -384,6 +391,8 @@ Input candidate shortcut
 ```
 
 ### 6.8 `SettingsWindowController`
+
+Tier: **Tier 3**.
 
 Responsibilities:
 
@@ -406,11 +415,11 @@ Shortcut updated.
 
 ## 7. Persistence
 
-Use `UserDefaults` for MVP.
+Use `UserDefaults` for simple preferences.
 
 Persist:
 
-- Assigned global shortcut.
+- Tier 3: assigned global shortcut.
 - Optional: launch at login preference.
 
 Do not persist pinned windows across app relaunch in MVP unless explicitly implemented later. AX window references are not stable across sessions.
@@ -437,8 +446,9 @@ If `AXUIElementPerformAction(..., kAXRaiseAction...)` fails:
 
 If the target window is closed:
 
+- Treat it as stale.
 - Remove its overlay.
-- Remove it from pinned list or mark stale.
+- Remove it from the pinned list automatically.
 - Continue managing other pinned windows.
 
 ### 8.4 Shortcut Registration Failure
@@ -459,6 +469,7 @@ Do not implement these in the first version unless the core MVP is complete:
 - Persisting pinned windows across reboot/relaunch.
 - App Store sandbox compliance.
 - Complex window picker UI.
+- User-configurable shortcut recorder and shortcut conflict UI; this is Tier 3, not Tier 1 MVP.
 
 ## 10. Acceptance Criteria
 
@@ -494,9 +505,11 @@ Do not implement these in the first version unless the core MVP is complete:
 
 - Menu shows pinned windows.
 - Each pinned item shows app icon, app name, and window title.
-- Closed/stale windows are handled safely.
+- Closed/stale windows are automatically removed and handled safely.
 
 ### 10.6 Shortcut Settings
+
+Tier: **Tier 3**. These are not required for Tier 1 MVP.
 
 - User can open settings.
 - User can press a key combination to assign shortcut.
@@ -513,7 +526,35 @@ Do not implement these in the first version unless the core MVP is complete:
 
 ## 11. Suggested Implementation Order
 
-### 11.1 First Slice Progress
+### 11.1 Priority Tiers
+
+Tier 1 MVP scope:
+
+- [x] Menu bar app with runtime Dock visibility control.
+- [x] `📌` runtime app icon and menu bar glyph.
+- [x] `Cmd+,` settings menu item and recovery Dock menu items for settings and menu bar visibility.
+- [x] Accessibility permission check and Settings access.
+- [x] Focused window detection through Accessibility.
+- [x] Pin/unpin current focused window using `kAXRaiseAction`.
+- [x] Timer-based raise maintenance.
+- [x] Yellow border overlay.
+- [x] Pinned window list.
+- [x] Fixed default global shortcut: `Control + Option + Command + P`.
+- [x] Automatic stale-window removal when a pinned window is closed/unavailable.
+- [x] Basic tests for core pin state behavior where practical.
+
+Tier 2 scope:
+
+- [ ] Multiple-pinned-window visual polish, including overlay stacking/order behavior.
+- [ ] Additional refinement beyond correct pin order and non-interactive overlays.
+
+Tier 3 scope:
+
+- [ ] Configurable Settings shortcut recorder.
+- [ ] Shortcut conflict validation UI by attempting registration.
+- [ ] Shortcut persistence beyond the fixed Tier 1 default.
+
+### 11.2 First Slice Progress
 
 - [x] Create native Xcode macOS AppKit project named `WinPin`.
 - [x] Configure menu bar app with `NSStatusItem` and runtime Dock visibility control.
@@ -526,25 +567,26 @@ Do not implement these in the first version unless the core MVP is complete:
 - [x] Add yellow border overlay panel.
 - [x] Add pinned window list with app icon/name/window title.
 - [x] Add fixed default global shortcut.
-- [ ] Add configurable Settings shortcut recorder.
+- [ ] Add configurable Settings shortcut recorder. **Tier 3; not required for Tier 1 MVP.**
 - [x] Add stale window cleanup.
 - [x] Add basic tests for core pin state behavior.
 
-### 11.2 Full Suggested Order
+### 11.3 Full Suggested Order
 
-1. Create macOS AppKit project named `WinPin`.
-2. Configure as menu bar app with `NSStatusItem`.
-3. Add Accessibility permission check.
-4. Implement focused AX window detection.
-5. Implement one-window pin/unpin with `kAXRaiseAction`.
-6. Add timer-based raise loop.
-7. Add yellow border overlay panel.
-8. Add pinned window list in menu.
-9. Add global shortcut with default shortcut.
-10. Add settings window with shortcut recorder.
-11. Add shortcut conflict validation by attempting registration.
-12. Add stale window cleanup.
-13. Add basic tests where practical.
+- [x] Create macOS AppKit project named `WinPin`.
+- [x] Configure as menu bar app with `NSStatusItem`.
+- [x] Add Accessibility permission check.
+- [x] Implement focused AX window detection.
+- [x] Implement one-window pin/unpin with `kAXRaiseAction`.
+- [x] Add timer-based raise loop.
+- [x] Add yellow border overlay panel.
+- [x] Add pinned window list in menu.
+- [x] Add global shortcut with fixed default shortcut.
+- [x] Add stale window cleanup.
+- [x] Add basic tests where practical.
+- [ ] Tier 2: refine multi-window overlay ordering/stacking.
+- [ ] Tier 3: add settings window with shortcut recorder.
+- [ ] Tier 3: add shortcut conflict validation by attempting registration.
 
 ## 12. Reference APIs
 
