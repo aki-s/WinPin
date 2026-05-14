@@ -30,10 +30,12 @@ final class PinManagerTests: XCTestCase {
         let provider = MockWindowProvider(focusedWindows: [window])
         provider.raiseResults = [.failure]
         let overlay = MockOverlayManager()
+        let logger = MockAppLogger()
         let manager = PinManager(
             permissionManager: permission,
             windowProvider: provider,
             overlayManager: overlay,
+            logger: logger,
             automaticallyStartTimer: false
         )
 
@@ -42,6 +44,11 @@ final class PinManagerTests: XCTestCase {
         XCTAssertEqual(manager.pinnedWindows.map(\.id), [window.id])
         XCTAssertEqual(overlay.shownIDs, [window.id])
         XCTAssertEqual(provider.raisedIDs, [window.id])
+        XCTAssertTrue(logger.messages.contains { message in
+            message.contains("pin_failed reason=initial_raise_failed")
+                && message.contains("rawValue=")
+                && message.contains("title=\"Pinned\"")
+        })
     }
 
     func testTransientMaintenanceFailuresDoNotImmediatelyRemovePinnedWindow() {
@@ -76,10 +83,12 @@ final class PinManagerTests: XCTestCase {
         let provider = MockWindowProvider(focusedWindows: [window])
         provider.refreshResults = [.failure, .failure, .failure]
         let overlay = MockOverlayManager()
+        let logger = MockAppLogger()
         let manager = PinManager(
             permissionManager: permission,
             windowProvider: provider,
             overlayManager: overlay,
+            logger: logger,
             automaticallyStartTimer: false
         )
 
@@ -90,6 +99,24 @@ final class PinManagerTests: XCTestCase {
 
         XCTAssertEqual(manager.pinnedWindows.map(\.id), [])
         XCTAssertEqual(overlay.removedIDs, [window.id])
+        XCTAssertEqual(logger.messages.filter { $0.contains("pin_maintenance_failed operation=refresh") }.count, 3)
+        XCTAssertTrue(logger.messages.contains { $0.contains("pin_removed reason=stale_window") })
+    }
+
+    func testPinFailureWithoutAccessibilityIsLogged() {
+        let permission = MockPermissionManager(isTrusted: false)
+        let logger = MockAppLogger()
+        let manager = PinManager(
+            permissionManager: permission,
+            windowProvider: MockWindowProvider(focusedWindows: []),
+            overlayManager: MockOverlayManager(),
+            logger: logger,
+            automaticallyStartTimer: false
+        )
+
+        manager.toggleCurrentWindow()
+
+        XCTAssertEqual(logger.messages, ["pin_failed reason=accessibility_permission_missing"])
     }
 
     func testMultiplePinnedWindowsRaiseInLaterPinWinsOrder() {
@@ -224,6 +251,27 @@ final class WinPinRuntimeSpecTests: XCTestCase {
     }
 }
 
+final class HotKeyManagerTests: XCTestCase {
+    func testSingleShortcutPressOnlyTogglesOnceUntilRelease() {
+        let manager = HotKeyManager()
+        var triggerCount = 0
+        manager.onHotKey = {
+            triggerCount += 1
+        }
+
+        manager.simulateHotKeyPressForTesting()
+        manager.simulateHotKeyPressForTesting()
+        manager.simulateHotKeyPressForTesting()
+
+        XCTAssertEqual(triggerCount, 1)
+
+        manager.simulateHotKeyReleaseForTesting()
+        manager.simulateHotKeyPressForTesting()
+
+        XCTAssertEqual(triggerCount, 2)
+    }
+}
+
 private final class MockPermissionManager: AccessibilityPermissionManaging {
     var isTrusted: Bool
     private(set) var promptCount = 0
@@ -288,5 +336,13 @@ private final class MockOverlayManager: OverlayManaging {
 
     func removeOverlay(for id: UUID) {
         removedIDs.append(id)
+    }
+}
+
+private final class MockAppLogger: AppLogging {
+    private(set) var messages: [String] = []
+
+    func log(_ message: String) {
+        messages.append(message)
     }
 }

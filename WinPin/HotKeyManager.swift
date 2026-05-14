@@ -11,7 +11,7 @@ final class HotKeyManager {
     private var eventHandlerRef: EventHandlerRef?
     private var globalKeyMonitor: Any?
     private var localKeyMonitor: Any?
-    private var lastTriggerTime: TimeInterval = 0
+    private var shortcutIsDown = false
 
     var onHotKey: (() -> Void)?
     private(set) var registrationError: String?
@@ -69,7 +69,10 @@ final class HotKeyManager {
             return true
         }
 
-        var eventType = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed))
+        var eventTypes = [
+            EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed)),
+            EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyReleased))
+        ]
         let selfPointer = Unmanaged.passUnretained(self).toOpaque()
         let status = InstallEventHandler(
             GetEventDispatcherTarget(),
@@ -94,13 +97,18 @@ final class HotKeyManager {
                 }
 
                 let manager = Unmanaged<HotKeyManager>.fromOpaque(userData).takeUnretainedValue()
+                let eventKind = GetEventKind(event)
                 DispatchQueue.main.async {
-                    manager.triggerHotKey()
+                    if eventKind == UInt32(kEventHotKeyReleased) {
+                        manager.releaseHotKey()
+                    } else {
+                        manager.triggerHotKey()
+                    }
                 }
                 return noErr
             },
-            1,
-            &eventType,
+            eventTypes.count,
+            &eventTypes,
             selfPointer,
             &eventHandlerRef
         )
@@ -113,18 +121,23 @@ final class HotKeyManager {
     }
 
     private func installEventMonitorFallback() {
-        globalKeyMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
+        globalKeyMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.keyDown, .keyUp]) { [weak self] event in
             self?.handleFallbackEvent(event)
         }
 
-        localKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+        localKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: [.keyDown, .keyUp]) { [weak self] event in
             self?.handleFallbackEvent(event)
             return event
         }
     }
 
     private func handleFallbackEvent(_ event: NSEvent) {
-        guard matchesDefaultShortcut(event) else {
+        if event.type == .keyUp, event.keyCode == UInt16(kVK_ANSI_T) {
+            releaseHotKey()
+            return
+        }
+
+        guard event.type == .keyDown, !event.isARepeat, matchesDefaultShortcut(event) else {
             return
         }
         DispatchQueue.main.async { [weak self] in
@@ -133,12 +146,15 @@ final class HotKeyManager {
     }
 
     private func triggerHotKey() {
-        let now = ProcessInfo.processInfo.systemUptime
-        guard now - lastTriggerTime > 0.25 else {
+        guard !shortcutIsDown else {
             return
         }
-        lastTriggerTime = now
+        shortcutIsDown = true
         onHotKey?()
+    }
+
+    private func releaseHotKey() {
+        shortcutIsDown = false
     }
 
     private func matchesDefaultShortcut(_ event: NSEvent) -> Bool {
@@ -149,4 +165,14 @@ final class HotKeyManager {
         let required: NSEvent.ModifierFlags = [.control, .option, .command]
         return event.modifierFlags.intersection(.deviceIndependentFlagsMask) == required
     }
+
+    #if DEBUG
+    func simulateHotKeyPressForTesting() {
+        triggerHotKey()
+    }
+
+    func simulateHotKeyReleaseForTesting() {
+        releaseHotKey()
+    }
+    #endif
 }

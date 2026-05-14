@@ -1,6 +1,10 @@
 import Foundation
 
-final class AppLogger {
+protocol AppLogging {
+    func log(_ message: String)
+}
+
+final class AppLogger: AppLogging {
     static let shared = AppLogger()
 
     let logURL: URL

@@ -10,6 +10,7 @@ final class PinManager {
     private let permissionManager: AccessibilityPermissionManaging
     private let windowProvider: WindowProviding
     private let overlayManager: OverlayManaging
+    private let logger: AppLogging
     private let automaticallyStartTimer: Bool
     private var timer: Timer?
 
@@ -26,17 +27,20 @@ final class PinManager {
         permissionManager: AccessibilityPermissionManaging,
         windowProvider: WindowProviding,
         overlayManager: OverlayManaging,
+        logger: AppLogging = AppLogger.shared,
         automaticallyStartTimer: Bool = true
     ) {
         self.permissionManager = permissionManager
         self.windowProvider = windowProvider
         self.overlayManager = overlayManager
+        self.logger = logger
         self.automaticallyStartTimer = automaticallyStartTimer
     }
 
     func toggleCurrentWindow() {
         guard permissionManager.isTrusted else {
             lastMessage = "Accessibility permission is required before WinPin can pin windows."
+            logger.log("pin_failed reason=accessibility_permission_missing")
             permissionManager.requestPermissionPrompt()
             onChange?()
             return
@@ -51,6 +55,7 @@ final class PinManager {
             }
         } catch {
             lastMessage = error.localizedDescription
+            logger.log("pin_failed reason=focused_window_unavailable error=\"\(error.localizedDescription)\"")
             onChange?()
         }
     }
@@ -84,6 +89,7 @@ final class PinManager {
             lastMessage = "Pinned \(window.snapshot.appName) - \(window.snapshot.windowTitle)."
         } else {
             lastMessage = "Pinned \(window.snapshot.appName) - \(window.snapshot.windowTitle), but the initial raise failed. WinPin will keep retrying."
+            logger.log("pin_failed reason=initial_raise_failed ax_error=\(describe(error)) \(describe(window))")
         }
         updateTimerState()
     }
@@ -127,6 +133,8 @@ final class PinManager {
             }
             pinnedWindows.removeAll { staleIDs.contains($0.id) }
             lastMessage = "Removed a pinned window that is no longer available."
+            let staleWindowIDs = staleIDs.map(\.uuidString).sorted().joined(separator: ",")
+            logger.log("pin_removed reason=stale_window ids=\(staleWindowIDs)")
             updateTimerState()
         }
     }
@@ -145,14 +153,14 @@ final class PinManager {
         for window in pinnedWindows {
             let refreshError = windowProvider.refreshSnapshot(for: window)
             guard refreshError == .success else {
-                markMaintenanceFailure(for: window, staleIDs: &staleIDs)
+                markMaintenanceFailure(for: window, error: refreshError, operation: "refresh", staleIDs: &staleIDs)
                 continue
             }
 
             overlayManager.updateOverlay(for: window)
             let raiseError = windowProvider.raise(window)
             if raiseError != .success {
-                markMaintenanceFailure(for: window, staleIDs: &staleIDs)
+                markMaintenanceFailure(for: window, error: raiseError, operation: "raise", staleIDs: &staleIDs)
             } else {
                 window.maintenanceFailureCount = 0
                 window.isStale = false
@@ -160,11 +168,22 @@ final class PinManager {
         }
     }
 
-    private func markMaintenanceFailure(for window: PinnedWindow, staleIDs: inout Set<UUID>) {
+    private func markMaintenanceFailure(for window: PinnedWindow, error: AXError, operation: String, staleIDs: inout Set<UUID>) {
         window.maintenanceFailureCount += 1
+        logger.log("pin_maintenance_failed operation=\(operation) ax_error=\(describe(error)) consecutive_failures=\(window.maintenanceFailureCount) \(describe(window))")
         if window.maintenanceFailureCount >= Constants.maxConsecutiveMaintenanceFailures {
             window.isStale = true
             staleIDs.insert(window.id)
         }
+    }
+
+    private func describe(_ error: AXError) -> String {
+        "\(error)(rawValue=\(error.rawValue))"
+    }
+
+    private func describe(_ window: PinnedWindow) -> String {
+        let snapshot = window.snapshot
+        let bundleIdentifier = snapshot.bundleIdentifier ?? "unknown"
+        return "window_id=\(window.id.uuidString) pid=\(snapshot.pid) bundle_id=\"\(bundleIdentifier)\" app=\"\(snapshot.appName)\" title=\"\(snapshot.windowTitle)\" frame=\"\(snapshot.frame)\""
     }
 }
