@@ -87,6 +87,7 @@ final class PinManager {
         overlayManager.showOverlay(for: window)
         if error == .success {
             lastMessage = "Pinned \(window.snapshot.appName) - \(window.snapshot.windowTitle)."
+            logger.log("pin_succeeded reason=initial_raise_succeeded \(describe(window))")
         } else {
             lastMessage = "Pinned \(window.snapshot.appName) - \(window.snapshot.windowTitle), but the initial raise failed. WinPin will keep retrying."
             logger.log("pin_failed reason=initial_raise_failed ax_error=\(describe(error)) \(describe(window))")
@@ -162,6 +163,9 @@ final class PinManager {
             if raiseError != .success {
                 markMaintenanceFailure(for: window, error: raiseError, operation: "raise", staleIDs: &staleIDs)
             } else {
+                if window.maintenanceFailureCount > 0 || window.isStale {
+                    logger.log("pin_succeeded reason=maintenance_recovered \(describe(window))")
+                }
                 window.maintenanceFailureCount = 0
                 window.isStale = false
             }

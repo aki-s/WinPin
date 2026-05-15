@@ -24,6 +24,28 @@ final class PinManagerTests: XCTestCase {
         XCTAssertEqual(provider.refreshCallCount, 0)
     }
 
+    func testInitialRaiseSuccessIsLogged() {
+        let window = makeWindow(title: "Pinned")
+        let permission = MockPermissionManager(isTrusted: true)
+        let provider = MockWindowProvider(focusedWindows: [window])
+        let overlay = MockOverlayManager()
+        let logger = MockAppLogger()
+        let manager = PinManager(
+            permissionManager: permission,
+            windowProvider: provider,
+            overlayManager: overlay,
+            logger: logger,
+            automaticallyStartTimer: false
+        )
+
+        manager.toggleCurrentWindow()
+
+        XCTAssertTrue(logger.messages.contains { message in
+            message.contains("pin_succeeded reason=initial_raise_succeeded")
+                && message.contains("title=\"Pinned\"")
+        })
+    }
+
     func testInitialRaiseFailureStillPinsAndShowsOverlay() {
         let window = makeWindow(title: "Pinned")
         let permission = MockPermissionManager(isTrusted: true)
@@ -75,6 +97,32 @@ final class PinManagerTests: XCTestCase {
 
         XCTAssertEqual(manager.pinnedWindows.map(\.id), [window.id])
         XCTAssertEqual(window.maintenanceFailureCount, 0)
+    }
+
+    func testMaintenanceRecoveryIsLoggedAfterTransientFailure() {
+        let window = makeWindow(title: "Pinned")
+        let permission = MockPermissionManager(isTrusted: true)
+        let provider = MockWindowProvider(focusedWindows: [window])
+        provider.refreshResults = [.success, .success]
+        provider.raiseResults = [.success, .failure, .success]
+        let overlay = MockOverlayManager()
+        let logger = MockAppLogger()
+        let manager = PinManager(
+            permissionManager: permission,
+            windowProvider: provider,
+            overlayManager: overlay,
+            logger: logger,
+            automaticallyStartTimer: false
+        )
+
+        manager.toggleCurrentWindow()
+        manager.maintenanceTick()
+        manager.maintenanceTick()
+
+        XCTAssertTrue(logger.messages.contains { message in
+            message.contains("pin_succeeded reason=maintenance_recovered")
+                && message.contains("title=\"Pinned\"")
+        })
     }
 
     func testConsecutiveMaintenanceFailuresRemovePinnedWindow() {
