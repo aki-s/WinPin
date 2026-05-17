@@ -47,7 +47,7 @@ final class PinManagerTests: XCTestCase {
     }
 
     func testInitialRaiseFailureStillPinsAndShowsOverlay() {
-        let window = makeWindow(title: "Pinned")
+        let window = makeWindow(title: "Pinned", axRole: kAXWindowRole, supportedActions: [kAXRaiseAction])
         let permission = MockPermissionManager(isTrusted: true)
         let provider = MockWindowProvider(focusedWindows: [window])
         provider.raiseResults = [.failure]
@@ -70,6 +70,8 @@ final class PinManagerTests: XCTestCase {
             message.contains("pin_failed reason=initial_raise_failed")
                 && message.contains("rawValue=")
                 && message.contains("title=\"Pinned\"")
+                && message.contains("ax_role=\"AXWindow\"")
+                && message.contains("ax_supported_actions=\"AXRaise\"")
         })
     }
 
@@ -162,12 +164,15 @@ final class PinManagerTests: XCTestCase {
             automaticallyStartTimer: false
         )
 
-        manager.toggleCurrentWindow()
+        manager.toggleCurrentWindow(source: .hotKey)
 
-        XCTAssertEqual(logger.messages, ["pin_failed reason=accessibility_permission_missing"])
+        XCTAssertEqual(logger.messages, [
+            "pin_requested source=hotkey",
+            "pin_failed reason=accessibility_permission_missing source=hotkey"
+        ])
     }
 
-    func testMultiplePinnedWindowsRaiseInLaterPinWinsOrder() {
+    func testMaintenanceOnlyRaisesLatestPinnedWindowToAvoidFlicker() {
         let first = makeWindow(title: "First")
         let second = makeWindow(title: "Second")
         let permission = MockPermissionManager(isTrusted: true)
@@ -187,10 +192,15 @@ final class PinManagerTests: XCTestCase {
         manager.maintenanceTick()
 
         XCTAssertEqual(manager.pinnedWindows.map(\.id), [first.id, second.id])
-        XCTAssertEqual(provider.raisedIDs, [first.id, second.id])
+        XCTAssertEqual(provider.raisedIDs, [second.id])
     }
 
-    private func makeWindow(title: String, pid: pid_t = 100) -> PinnedWindow {
+    private func makeWindow(
+        title: String,
+        pid: pid_t = 100,
+        axRole: String? = nil,
+        supportedActions: [String] = []
+    ) -> PinnedWindow {
         let id = UUID()
         let snapshot = AXWindowSnapshot(
             id: id,
@@ -198,7 +208,9 @@ final class PinManagerTests: XCTestCase {
             bundleIdentifier: "com.example.\(title)",
             appName: "App \(title)",
             windowTitle: title,
-            frame: CGRect(x: 10, y: 20, width: 300, height: 200)
+            frame: CGRect(x: 10, y: 20, width: 300, height: 200),
+            axRole: axRole,
+            supportedActions: supportedActions
         )
         return PinnedWindow(
             id: id,

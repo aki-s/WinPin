@@ -203,7 +203,7 @@ final class MenuBarController: NSObject {
     }
 
     @objc private func toggleCurrentWindow() {
-        pinManager.toggleCurrentWindow()
+        pinManager.toggleCurrentWindow(source: .menu)
     }
 
     @objc private func unpinWindow(_ sender: NSMenuItem) {

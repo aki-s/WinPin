@@ -87,6 +87,9 @@ macOS does not provide a stable public API to mark another app's existing window
 - Periodically and/or reactively call `kAXRaiseAction` on that window.
 - Track the window frame and update a visual overlay.
 - If the target app/window disappears, treat the pin as stale and remove it automatically.
+- Treat focused-window lookup and raise support as diagnosable preconditions, not assumptions: log the trigger source, raw AX errors, focused app identity, AX role, and supported actions before deciding whether a failure is timing-related, unsupported, or stale.
+- If system-wide focused-app lookup has no value, fall back to the current or last external frontmost app before giving up; menu bar and global-hotkey delivery can otherwise leave Accessibility with no focused app at the instant WinPin asks.
+- Avoid repeatedly raising every pinned window on each maintenance tick. Multiple pins are inherently competing raise requests, so maintenance should keep snapshots/overlays fresh for all pins but only raise the most recent available pin to avoid visible flicker.
 
 ### 4.4 Space / Fullscreen Support
 
@@ -161,7 +164,7 @@ Implementation outline:
 let systemWide = AXUIElementCreateSystemWide()
 ```
 
-2. Get the focused application/window through Accessibility attributes.
+2. Get the focused application/window through Accessibility attributes, with a frontmost-app fallback if `AXFocusedApplication` has no value at trigger time.
 3. Extract:
    - PID
    - app name
@@ -169,9 +172,12 @@ let systemWide = AXUIElementCreateSystemWide()
    - window title
    - window frame
    - AX window element
-4. Store it as a pinned window.
-5. Start raise maintenance.
-6. Show yellow border overlay around the pinned window.
+   - AX role
+   - supported AX actions
+4. Log raw AX failures separately for focused application lookup, focused window lookup, PID lookup, and frame lookup.
+5. Store it as a pinned window.
+6. Start raise maintenance.
+7. Show yellow border overlay around the pinned window.
 
 ### 5.3 Unpin Current Window
 
@@ -206,7 +212,7 @@ If a pinned window becomes unavailable:
 When multiple windows are pinned:
 
 - Later pins win.
-- Raise pinned windows in pin order so the most recently pinned window is raised last.
+- Keep pinned windows refreshed, but only raise the most recent available pinned window during maintenance to avoid visible flicker from competing raise requests.
 - Overlay stacking/order polish is Tier 2; for MVP, keep overlays correct and non-interactive without over-optimizing visual z-order.
 
 ### 5.5 Global Keyboard Shortcut Toggle
@@ -442,7 +448,8 @@ If `AXUIElementPerformAction(..., kAXRaiseAction...)` fails:
 
 - Show non-fatal error.
 - Do not crash.
-- Mark the window as unsupported or stale.
+- Log the AX error raw value, trigger source, focused app/window identity, AX role, and supported actions.
+- Mark the window as unsupported when the AX element does not expose the required action or role, and stale only when the element/window is no longer available.
 
 ### 8.3 Target Window Closed
 
@@ -493,7 +500,7 @@ Do not implement these in the first version unless the core MVP is complete:
 
 - User can pin the currently focused window.
 - Pinning uses window-level Accessibility action, not app-level activation as the primary mechanism.
-- Pinned window is repeatedly raised while pinned.
+- The most recent available pinned window is repeatedly raised while pinned; older pins remain tracked and highlighted without being raised every tick.
 - Other windows from the same app should not intentionally be raised by WinPin.
 - If multiple windows are pinned, the most recently pinned window wins the raise order.
 
@@ -544,6 +551,13 @@ Tier 1 MVP scope:
 - [x] Fixed default global shortcut: `Control + Option + Command + T`.
 - [x] Automatic stale-window removal when a pinned window is closed/unavailable.
 - [x] Basic tests for core pin state behavior where practical.
+
+Known Tier 1 fixes:
+
+- [ ] Some apps, including `cmux`, still cannot be pinned even when Accessibility reports an `AXWindow` with `AXRaise`.
+- [ ] The Settings window opened with `Cmd+,` cannot currently be closed with `Cmd+W`.
+- [ ] The app icon is missing in System Settings > Privacy & Security > Accessibility.
+- [ ] Before Accessibility permission is granted, the menu bar UI exposes multiple pin/permission actions that effectively propose the same Accessibility settings change; reduce this to one clear action.
 
 Tier 1.5 scope:
 

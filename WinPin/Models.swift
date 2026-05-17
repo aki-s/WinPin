@@ -8,6 +8,28 @@ struct AXWindowSnapshot: Hashable {
     let appName: String
     let windowTitle: String
     let frame: CGRect
+    let axRole: String?
+    let supportedActions: [String]
+
+    init(
+        id: UUID,
+        pid: pid_t,
+        bundleIdentifier: String?,
+        appName: String,
+        windowTitle: String,
+        frame: CGRect,
+        axRole: String? = nil,
+        supportedActions: [String] = []
+    ) {
+        self.id = id
+        self.pid = pid
+        self.bundleIdentifier = bundleIdentifier
+        self.appName = appName
+        self.windowTitle = windowTitle
+        self.frame = frame
+        self.axRole = axRole
+        self.supportedActions = supportedActions
+    }
 }
 
 final class PinnedWindow {

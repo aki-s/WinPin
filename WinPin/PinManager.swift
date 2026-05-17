@@ -2,6 +2,12 @@ import AppKit
 import ApplicationServices
 
 final class PinManager {
+    enum TriggerSource: String {
+        case hotKey = "hotkey"
+        case menu = "menu"
+        case unknown = "unknown"
+    }
+
     private enum Constants {
         static let raiseInterval: TimeInterval = 0.10
         static let maxConsecutiveMaintenanceFailures = 3
@@ -37,10 +43,11 @@ final class PinManager {
         self.automaticallyStartTimer = automaticallyStartTimer
     }
 
-    func toggleCurrentWindow() {
+    func toggleCurrentWindow(source: TriggerSource = .unknown) {
+        logger.log("pin_requested source=\(source.rawValue)")
         guard permissionManager.isTrusted else {
             lastMessage = "Accessibility permission is required before WinPin can pin windows."
-            logger.log("pin_failed reason=accessibility_permission_missing")
+            logger.log("pin_failed reason=accessibility_permission_missing source=\(source.rawValue)")
             permissionManager.requestPermissionPrompt()
             onChange?()
             return
@@ -55,7 +62,7 @@ final class PinManager {
             }
         } catch {
             lastMessage = error.localizedDescription
-            logger.log("pin_failed reason=focused_window_unavailable error=\"\(error.localizedDescription)\"")
+            logger.log("pin_failed reason=focused_window_unavailable source=\(source.rawValue) error=\"\(error.localizedDescription)\"")
             onChange?()
         }
     }
@@ -69,7 +76,7 @@ final class PinManager {
             return false
         }
         lastMessage = pinnedWindows.isEmpty ? "No pinned windows." : nil
-        raisePinnedWindowsBestEffort()
+        raiseLatestPinnedWindowBestEffort()
         updateTimerState()
     }
 
@@ -140,17 +147,18 @@ final class PinManager {
         }
     }
 
-    private func raisePinnedWindowsBestEffort() {
-        // Later pins win: raising in array order means the newest pinned window
-        // is raised last and should be frontmost when macOS permits it.
-        for window in pinnedWindows {
-            _ = windowProvider.raise(window)
+    private func raiseLatestPinnedWindowBestEffort() {
+        // Repeatedly raising every pinned window can make overlapping pins flicker.
+        // The newest pin is the effective frontmost pin.
+        guard let window = pinnedWindows.last else {
+            return
         }
+        _ = windowProvider.raise(window)
     }
 
     private func maintainPinnedWindows(staleIDs: inout Set<UUID>) {
-        // Later pins win: refreshing and raising in array order means the newest
-        // pinned window is raised last when macOS permits it.
+        var newestAvailableWindow: PinnedWindow?
+
         for window in pinnedWindows {
             let refreshError = windowProvider.refreshSnapshot(for: window)
             guard refreshError == .success else {
@@ -159,16 +167,22 @@ final class PinManager {
             }
 
             overlayManager.updateOverlay(for: window)
-            let raiseError = windowProvider.raise(window)
-            if raiseError != .success {
-                markMaintenanceFailure(for: window, error: raiseError, operation: "raise", staleIDs: &staleIDs)
-            } else {
-                if window.maintenanceFailureCount > 0 || window.isStale {
-                    logger.log("pin_succeeded reason=maintenance_recovered \(describe(window))")
-                }
-                window.maintenanceFailureCount = 0
-                window.isStale = false
+            newestAvailableWindow = window
+        }
+
+        guard let newestAvailableWindow else {
+            return
+        }
+
+        let raiseError = windowProvider.raise(newestAvailableWindow)
+        if raiseError != .success {
+            markMaintenanceFailure(for: newestAvailableWindow, error: raiseError, operation: "raise", staleIDs: &staleIDs)
+        } else {
+            if newestAvailableWindow.maintenanceFailureCount > 0 || newestAvailableWindow.isStale {
+                logger.log("pin_succeeded reason=maintenance_recovered \(describe(newestAvailableWindow))")
             }
+            newestAvailableWindow.maintenanceFailureCount = 0
+            newestAvailableWindow.isStale = false
         }
     }
 
@@ -188,6 +202,8 @@ final class PinManager {
     private func describe(_ window: PinnedWindow) -> String {
         let snapshot = window.snapshot
         let bundleIdentifier = snapshot.bundleIdentifier ?? "unknown"
-        return "window_id=\(window.id.uuidString) pid=\(snapshot.pid) bundle_id=\"\(bundleIdentifier)\" app=\"\(snapshot.appName)\" title=\"\(snapshot.windowTitle)\" frame=\"\(snapshot.frame)\""
+        let role = snapshot.axRole ?? "unknown"
+        let supportedActions = snapshot.supportedActions.isEmpty ? "none" : snapshot.supportedActions.joined(separator: ",")
+        return "window_id=\(window.id.uuidString) pid=\(snapshot.pid) bundle_id=\"\(bundleIdentifier)\" app=\"\(snapshot.appName)\" title=\"\(snapshot.windowTitle)\" frame=\"\(snapshot.frame)\" ax_role=\"\(role)\" ax_supported_actions=\"\(supportedActions)\""
     }
 }

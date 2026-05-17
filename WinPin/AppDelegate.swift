@@ -41,7 +41,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menuBarController.start()
 
         hotKeyManager.onHotKey = { [weak self] in
-            self?.pinManager.toggleCurrentWindow()
+            self?.pinManager.toggleCurrentWindow(source: .hotKey)
         }
         hotKeyManager.registerDefaultHotKey()
         AppLogger.shared.log("applicationDidFinishLaunching completed activationPolicy=\(NSApp.activationPolicy().rawValue)")
