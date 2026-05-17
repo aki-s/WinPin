@@ -11,7 +11,7 @@ final class MenuBarController: NSObject {
         static let noPinnedWindows = "No pinned windows"
     }
 
-    private let permissionManager: AccessibilityPermissionManager
+    private let permissionManager: AccessibilityPermissionManaging
     private let pinManager: PinManager
     private let hotKeyManager: HotKeyManager
     private let onOpenSettings: () -> Void
@@ -19,7 +19,7 @@ final class MenuBarController: NSObject {
     private var isMenuBarItemVisible = true
 
     init(
-        permissionManager: AccessibilityPermissionManager,
+        permissionManager: AccessibilityPermissionManaging,
         pinManager: PinManager,
         hotKeyManager: HotKeyManager,
         onOpenSettings: @escaping () -> Void
@@ -83,6 +83,10 @@ final class MenuBarController: NSObject {
         statusItem != nil
     }
 
+    func menuItemsForTesting() -> [NSMenuItem] {
+        buildMenu().items
+    }
+
     func recreateStatusItem() {
         AppLogger.shared.log("MenuBarController recreating status item")
         removeStatusItem()
@@ -119,11 +123,11 @@ final class MenuBarController: NSObject {
 
         addPermissionItems(to: menu)
 
-        let toggleTitle = permissionManager.isTrusted ? "Pin / Unpin Current Window" : "Pinning Disabled Until Accessibility Is Allowed"
-        let toggleItem = NSMenuItem(title: toggleTitle, action: #selector(toggleCurrentWindow), keyEquivalent: "")
-        toggleItem.target = self
-        toggleItem.isEnabled = permissionManager.isTrusted
-        menu.addItem(toggleItem)
+        if permissionManager.isTrusted {
+            let toggleItem = NSMenuItem(title: "Pin / Unpin Current Window", action: #selector(toggleCurrentWindow), keyEquivalent: "")
+            toggleItem.target = self
+            menu.addItem(toggleItem)
+        }
 
         menu.addItem(.separator())
         addPinnedWindowItems(to: menu)
@@ -158,10 +162,6 @@ final class MenuBarController: NSObject {
         let prompt = NSMenuItem(title: "Request Accessibility Permission", action: #selector(requestAccessibilityPermission), keyEquivalent: "")
         prompt.target = self
         menu.addItem(prompt)
-
-        let settings = NSMenuItem(title: "Open Accessibility Settings", action: #selector(openAccessibilitySettings), keyEquivalent: "")
-        settings.target = self
-        menu.addItem(settings)
     }
 
     private func addPinnedWindowItems(to menu: NSMenu) {
@@ -216,10 +216,6 @@ final class MenuBarController: NSObject {
     @objc private func requestAccessibilityPermission() {
         permissionManager.requestPermissionPrompt()
         refresh()
-    }
-
-    @objc private func openAccessibilitySettings() {
-        permissionManager.openAccessibilitySettings()
     }
 
     @objc private func openSettings() {

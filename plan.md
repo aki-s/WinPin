@@ -58,7 +58,7 @@ WinPin requires Accessibility permission.
 On first launch or before first pin operation, detect whether the app is trusted for Accessibility. If not trusted:
 
 - Show a clear explanation.
-- Provide a button/action to open System Settings > Privacy & Security > Accessibility where possible.
+- Provide a single button/action to request Accessibility permission.
 - Disable pin actions until permission is granted.
 
 ### 4.2 Per-Window Pinning, Not App Activation
@@ -557,7 +557,7 @@ Known Tier 1 fixes:
 - [ ] Some apps, including `cmux`, still cannot be pinned even when Accessibility reports an `AXWindow` with `AXRaise`.
 - [x] The Settings window opened with `Cmd+,` can be closed with `Cmd+W`.
 - [x] The app icon is missing in System Settings > Privacy & Security > Accessibility.
-- [ ] Before Accessibility permission is granted, the menu bar UI exposes multiple pin/permission actions that effectively propose the same Accessibility settings change; reduce this to one clear action.
+- [x] Before Accessibility permission is granted, the menu bar UI exposes one clear Accessibility request action instead of multiple permission-setting routes.
 
 Tier 1.5 scope:
 

@@ -294,6 +294,17 @@ final class WinPinRuntimeSpecTests: XCTestCase {
         manager.setMenuBarItemVisible(false)
     }
 
+    func testMenuBarMenuShowsOneAccessibilityActionWhenPermissionIsMissing() {
+        let manager = makeMenuBarController(permissionIsTrusted: false)
+        let items = manager.menuItemsForTesting()
+
+        XCTAssertNotNil(items.first { $0.title == "Accessibility: Required" })
+        XCTAssertEqual(items.filter { $0.title == "Request Accessibility Permission" }.count, 1)
+        XCTAssertNil(items.first { $0.title == "Open Accessibility Settings" })
+        XCTAssertNil(items.first { $0.title == "Pinning Disabled Until Accessibility Is Allowed" })
+        XCTAssertNil(items.first { $0.title == "Pin / Unpin Current Window" })
+    }
+
     func testDockMenuListsRequiredRecoveryActions() {
         let appDelegate = AppDelegate()
         let menu = appDelegate.applicationDockMenu(NSApp)
@@ -329,15 +340,16 @@ final class WinPinRuntimeSpecTests: XCTestCase {
         XCTAssertEqual(closeItem?.keyEquivalentModifierMask, [.command])
     }
 
-    private func makeMenuBarController() -> MenuBarController {
+    private func makeMenuBarController(permissionIsTrusted: Bool = true) -> MenuBarController {
+        let permissionManager = MockPermissionManager(isTrusted: permissionIsTrusted)
         let pinManager = PinManager(
-            permissionManager: MockPermissionManager(isTrusted: true),
+            permissionManager: permissionManager,
             windowProvider: MockWindowProvider(focusedWindows: []),
             overlayManager: MockOverlayManager(),
             automaticallyStartTimer: false
         )
         return MenuBarController(
-            permissionManager: AccessibilityPermissionManager(),
+            permissionManager: permissionManager,
             pinManager: pinManager,
             hotKeyManager: HotKeyManager(),
             onOpenSettings: {}

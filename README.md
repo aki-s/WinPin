@@ -92,7 +92,7 @@ Settings currently includes:
 
 WinPin needs Accessibility permission to read and raise other apps' windows.
 
-If permission is missing, the menu disables pinning and exposes actions to request permission or open Accessibility settings. After granting permission in System Settings, relaunching the app is the most reliable way to confirm the new trust state during development.
+If permission is missing, the menu disables pinning and exposes one action to request Accessibility permission. After granting permission in System Settings, relaunching the app is the most reliable way to confirm the new trust state during development.
 
 To reset the development Accessibility grant for the WinPin bundle ID:
 
