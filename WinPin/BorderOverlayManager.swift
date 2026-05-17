@@ -15,8 +15,9 @@ final class BorderOverlayManager: OverlayManaging {
     private var overlays: [UUID: NSPanel] = [:]
 
     func showOverlay(for pinnedWindow: PinnedWindow) {
-        let panel = BorderPanel(contentRect: pinnedWindow.snapshot.frame)
-        panel.contentView = BorderView(frame: NSRect(origin: .zero, size: pinnedWindow.snapshot.frame.size))
+        let overlayFrame = AXFrameConverter.appKitFrame(for: pinnedWindow.snapshot.frame)
+        let panel = BorderPanel(contentRect: overlayFrame)
+        panel.contentView = BorderView(frame: NSRect(origin: .zero, size: overlayFrame.size))
         overlays[pinnedWindow.id] = panel
         updateOverlay(for: pinnedWindow)
         panel.orderFrontRegardless()
@@ -26,7 +27,7 @@ final class BorderOverlayManager: OverlayManaging {
         guard let panel = overlays[pinnedWindow.id] else {
             return
         }
-        panel.setFrame(pinnedWindow.snapshot.frame, display: true)
+        panel.setFrame(AXFrameConverter.appKitFrame(for: pinnedWindow.snapshot.frame), display: true)
         panel.orderFrontRegardless()
     }
 
@@ -35,6 +36,32 @@ final class BorderOverlayManager: OverlayManaging {
             return
         }
         panel.orderOut(nil)
+    }
+}
+
+enum AXFrameConverter {
+    static func appKitFrame(for axFrame: CGRect, screens: [CGRect] = NSScreen.screens.map(\.frame)) -> CGRect {
+        guard let screen = screen(containingAccessibilityFrame: axFrame, screens: screens) else {
+            return axFrame
+        }
+
+        return appKitFrame(for: axFrame, in: screen)
+    }
+
+    static func appKitFrame(for axFrame: CGRect, in screen: CGRect) -> CGRect {
+        CGRect(
+            x: axFrame.minX,
+            y: screen.maxY - axFrame.maxY + screen.minY,
+            width: axFrame.width,
+            height: axFrame.height
+        )
+    }
+
+    private static func screen(containingAccessibilityFrame axFrame: CGRect, screens: [CGRect]) -> CGRect? {
+        let center = CGPoint(x: axFrame.midX, y: axFrame.midY)
+        return screens.first { $0.contains(center) }
+            ?? screens.first { $0.intersects(axFrame) }
+            ?? screens.first
     }
 }
 

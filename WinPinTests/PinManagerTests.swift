@@ -253,6 +253,24 @@ final class PinManagerTests: XCTestCase {
 final class WinPinRuntimeSpecTests: XCTestCase {
     private let showMenuBarItemKey = "showMenuBarItem"
 
+    func testAccessibilityFrameIsConvertedToAppKitFrameForBottomHalfWindow() {
+        let screen = CGRect(x: 0, y: 0, width: 1710, height: 1106)
+        let accessibilityFrame = CGRect(x: 0, y: 570, width: 1710, height: 536)
+
+        let appKitFrame = AXFrameConverter.appKitFrame(for: accessibilityFrame, screens: [screen])
+
+        XCTAssertEqual(appKitFrame, CGRect(x: 0, y: 0, width: 1710, height: 536))
+    }
+
+    func testAccessibilityFrameIsConvertedToAppKitFrameForTopHalfWindow() {
+        let screen = CGRect(x: 0, y: 0, width: 1710, height: 1106)
+        let accessibilityFrame = CGRect(x: 0, y: 0, width: 1710, height: 536)
+
+        let appKitFrame = AXFrameConverter.appKitFrame(for: accessibilityFrame, screens: [screen])
+
+        XCTAssertEqual(appKitFrame, CGRect(x: 0, y: 570, width: 1710, height: 536))
+    }
+
     func testAppIconAndMenuBarGlyphUsePinSymbol() {
         XCTAssertEqual(AppIconFactory.symbol, "📌")
     }
