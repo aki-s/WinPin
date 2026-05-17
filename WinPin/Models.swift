@@ -39,6 +39,7 @@ final class PinnedWindow {
     var appIcon: NSImage?
     var isStale: Bool
     var maintenanceFailureCount: Int
+    var raiseFailureCount: Int
 
     init(
         id: UUID = UUID(),
@@ -46,7 +47,8 @@ final class PinnedWindow {
         snapshot: AXWindowSnapshot,
         appIcon: NSImage?,
         isStale: Bool = false,
-        maintenanceFailureCount: Int = 0
+        maintenanceFailureCount: Int = 0,
+        raiseFailureCount: Int = 0
     ) {
         self.id = id
         self.axElement = axElement
@@ -54,5 +56,6 @@ final class PinnedWindow {
         self.appIcon = appIcon
         self.isStale = isStale
         self.maintenanceFailureCount = maintenanceFailureCount
+        self.raiseFailureCount = raiseFailureCount
     }
 }

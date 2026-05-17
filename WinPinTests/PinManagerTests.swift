@@ -153,6 +153,35 @@ final class PinManagerTests: XCTestCase {
         XCTAssertTrue(logger.messages.contains { $0.contains("pin_removed reason=stale_window") })
     }
 
+    func testConsecutiveRaiseFailuresDoNotRemoveAvailablePinnedWindow() {
+        let window = makeWindow(title: "Pinned")
+        let permission = MockPermissionManager(isTrusted: true)
+        let provider = MockWindowProvider(focusedWindows: [window])
+        provider.refreshResults = [.success, .success, .success, .success]
+        provider.raiseResults = [.success, .failure, .failure, .failure, .failure]
+        let overlay = MockOverlayManager()
+        let logger = MockAppLogger()
+        let manager = PinManager(
+            permissionManager: permission,
+            windowProvider: provider,
+            overlayManager: overlay,
+            logger: logger,
+            automaticallyStartTimer: false
+        )
+
+        manager.toggleCurrentWindow()
+        manager.maintenanceTick()
+        manager.maintenanceTick()
+        manager.maintenanceTick()
+        manager.maintenanceTick()
+
+        XCTAssertEqual(manager.pinnedWindows.map(\.id), [window.id])
+        XCTAssertEqual(overlay.removedIDs, [])
+        XCTAssertEqual(logger.messages.filter { $0.contains("pin_maintenance_failed operation=raise") }.count, 3)
+        XCTAssertTrue(logger.messages.allSatisfy { !$0.contains("pin_removed reason=stale_window") })
+        XCTAssertTrue(logger.messages.contains { $0.contains("stale_candidate=false") })
+    }
+
     func testPinFailureWithoutAccessibilityIsLogged() {
         let permission = MockPermissionManager(isTrusted: false)
         let logger = MockAppLogger()

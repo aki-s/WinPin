@@ -176,12 +176,13 @@ final class PinManager {
 
         let raiseError = windowProvider.raise(newestAvailableWindow)
         if raiseError != .success {
-            markMaintenanceFailure(for: newestAvailableWindow, error: raiseError, operation: "raise", staleIDs: &staleIDs)
+            markRaiseFailure(for: newestAvailableWindow, error: raiseError)
         } else {
-            if newestAvailableWindow.maintenanceFailureCount > 0 || newestAvailableWindow.isStale {
+            if newestAvailableWindow.maintenanceFailureCount > 0 || newestAvailableWindow.raiseFailureCount > 0 || newestAvailableWindow.isStale {
                 logger.log("pin_succeeded reason=maintenance_recovered \(describe(newestAvailableWindow))")
             }
             newestAvailableWindow.maintenanceFailureCount = 0
+            newestAvailableWindow.raiseFailureCount = 0
             newestAvailableWindow.isStale = false
         }
     }
@@ -192,6 +193,16 @@ final class PinManager {
         if window.maintenanceFailureCount >= Constants.maxConsecutiveMaintenanceFailures {
             window.isStale = true
             staleIDs.insert(window.id)
+        }
+    }
+
+    private func markRaiseFailure(for window: PinnedWindow, error: AXError) {
+        window.raiseFailureCount += 1
+
+        // Persistent AXRaise failures do not prove the AX window is gone.
+        // Keep the pin while refresh succeeds, and throttle logs to avoid 0.10s spam.
+        if window.raiseFailureCount <= Constants.maxConsecutiveMaintenanceFailures || window.raiseFailureCount.isMultiple(of: 50) {
+            logger.log("pin_maintenance_failed operation=raise ax_error=\(describe(error)) consecutive_failures=\(window.raiseFailureCount) stale_candidate=false \(describe(window))")
         }
     }
 

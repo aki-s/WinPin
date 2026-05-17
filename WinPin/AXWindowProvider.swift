@@ -101,7 +101,12 @@ final class AXWindowProvider: WindowProviding {
         // This is best effort. macOS does not expose a public always-on-top flag
         // for another app's existing window, so WinPin repeatedly raises the
         // specific AX window instead of activating its whole application.
-        AXUIElementPerformAction(pinnedWindow.axElement, kAXRaiseAction as CFString)
+        let raiseError = AXUIElementPerformAction(pinnedWindow.axElement, kAXRaiseAction as CFString)
+        guard raiseError != .success else {
+            return .success
+        }
+
+        return fallbackRaise(pinnedWindow, after: raiseError)
     }
 
     func refreshSnapshot(for pinnedWindow: PinnedWindow) -> AXError {
@@ -233,6 +238,29 @@ final class AXWindowProvider: WindowProviding {
 
     private func describe(_ error: AXError) -> String {
         "\(error)(rawValue=\(error.rawValue))"
+    }
+
+    private func fallbackRaise(_ pinnedWindow: PinnedWindow, after raiseError: AXError) -> AXError {
+        let app = NSRunningApplication(processIdentifier: pinnedWindow.snapshot.pid)
+        let didActivate = app?.activate(options: [.activateIgnoringOtherApps]) ?? false
+        let mainError = AXUIElementSetAttributeValue(
+            pinnedWindow.axElement,
+            kAXMainAttribute as CFString,
+            kCFBooleanTrue
+        )
+        let focusedError = AXUIElementSetAttributeValue(
+            pinnedWindow.axElement,
+            kAXFocusedAttribute as CFString,
+            kCFBooleanTrue
+        )
+        let retryError = AXUIElementPerformAction(pinnedWindow.axElement, kAXRaiseAction as CFString)
+
+        logger.log("raise_fallback initial_error=\(describe(raiseError)) activated=\(didActivate) main_error=\(describe(mainError)) focused_error=\(describe(focusedError)) retry_error=\(describe(retryError)) pid=\(pinnedWindow.snapshot.pid) bundle_id=\"\(pinnedWindow.snapshot.bundleIdentifier ?? "unknown")\" app=\"\(pinnedWindow.snapshot.appName)\" title=\"\(pinnedWindow.snapshot.windowTitle)\"")
+
+        if retryError == .success || mainError == .success || focusedError == .success || didActivate {
+            return .success
+        }
+        return raiseError
     }
 
     private func fallbackFocusedApplication(after error: AXError) throws -> AXUIElement {
