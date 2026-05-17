@@ -29,7 +29,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     )
 
     func applicationWillFinishLaunching(_ notification: Notification) {
-        NSApp.applicationIconImage = AppIconFactory.makeApplicationIcon()
+        NSApp.applicationIconImage = Self.bundleAppIcon() ?? AppIconFactory.makeApplicationIcon()
         let policy: NSApplication.ActivationPolicy = LaunchMode.shouldShowDock ? .regular : .accessory
         AppLogger.shared.log("applicationWillFinishLaunching activationPolicy=\(policy.rawValue)")
         NSApp.setActivationPolicy(policy)
@@ -147,5 +147,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func quit() {
         NSApp.terminate(nil)
+    }
+
+    private static func bundleAppIcon() -> NSImage? {
+        Bundle.main.url(forResource: "AppIcon", withExtension: "icns").flatMap(NSImage.init(contentsOf:))
     }
 }
