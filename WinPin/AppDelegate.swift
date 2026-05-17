@@ -2,6 +2,7 @@ import AppKit
 
 enum AppMenuTitle {
     static let settings = "Settings..."
+    static let closeWindow = "Close Window"
     static let dockSettings = "設定画面を開く"
     static let dockMenuBarVisibilityToggle = "menubarへの表示非表示切り替え"
     static let quit = "Quit WinPin"
@@ -95,6 +96,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         settings.target = self
         settings.keyEquivalentModifierMask = [.command]
         appMenu.addItem(settings)
+
+        let closeWindow = NSMenuItem(
+            title: AppMenuTitle.closeWindow,
+            action: #selector(NSWindow.performClose(_:)),
+            keyEquivalent: "w"
+        )
+        closeWindow.target = nil
+        closeWindow.keyEquivalentModifierMask = [.command]
+        appMenu.addItem(closeWindow)
         appMenu.addItem(.separator())
 
         let quit = NSMenuItem(title: AppMenuTitle.quit, action: #selector(quit), keyEquivalent: "q")

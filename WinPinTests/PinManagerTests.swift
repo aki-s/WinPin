@@ -316,6 +316,19 @@ final class WinPinRuntimeSpecTests: XCTestCase {
         XCTAssertEqual(settingsItem?.keyEquivalentModifierMask, [.command])
     }
 
+    func testCommandWMainMenuClosesKeyWindowThroughResponderChain() {
+        let appDelegate = AppDelegate()
+
+        appDelegate.installMainMenu()
+
+        let appMenu = NSApp.mainMenu?.items.first?.submenu
+        let closeItem = appMenu?.items.first { $0.title == AppMenuTitle.closeWindow }
+        XCTAssertEqual(closeItem?.action, #selector(NSWindow.performClose(_:)))
+        XCTAssertNil(closeItem?.target)
+        XCTAssertEqual(closeItem?.keyEquivalent, "w")
+        XCTAssertEqual(closeItem?.keyEquivalentModifierMask, [.command])
+    }
+
     private func makeMenuBarController() -> MenuBarController {
         let pinManager = PinManager(
             permissionManager: MockPermissionManager(isTrusted: true),

@@ -555,7 +555,7 @@ Tier 1 MVP scope:
 Known Tier 1 fixes:
 
 - [ ] Some apps, including `cmux`, still cannot be pinned even when Accessibility reports an `AXWindow` with `AXRaise`.
-- [ ] The Settings window opened with `Cmd+,` cannot currently be closed with `Cmd+W`.
+- [x] The Settings window opened with `Cmd+,` can be closed with `Cmd+W`.
 - [ ] The app icon is missing in System Settings > Privacy & Security > Accessibility.
 - [ ] Before Accessibility permission is granted, the menu bar UI exposes multiple pin/permission actions that effectively propose the same Accessibility settings change; reduce this to one clear action.
 
