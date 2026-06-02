@@ -206,6 +206,32 @@ final class PinManagerTests: XCTestCase {
         ])
     }
 
+    func testUnpinAllRemovesAllPinnedWindowsAndUpdatesMessage() {
+        let first = makeWindow(title: "First")
+        let second = makeWindow(title: "Second")
+        let permission = MockPermissionManager(isTrusted: true)
+        let provider = MockWindowProvider(focusedWindows: [first, second])
+        let overlay = MockOverlayManager()
+        let manager = PinManager(
+            permissionManager: permission,
+            windowProvider: provider,
+            overlayManager: overlay,
+            automaticallyStartTimer: false
+        )
+        var observedMessages: [String?] = []
+        manager.onChange = {
+            observedMessages.append(manager.lastMessage)
+        }
+
+        manager.toggleCurrentWindow()
+        manager.toggleCurrentWindow()
+        manager.unpinAll()
+
+        XCTAssertEqual(manager.pinnedWindows.map(\.id), [])
+        XCTAssertEqual(overlay.removedIDs, [first.id, second.id])
+        XCTAssertEqual(observedMessages.last, "No pinned windows.")
+    }
+
     func testPinFailureWithoutAccessibilityIsLogged() {
         let permission = MockPermissionManager(isTrusted: false)
         let logger = MockAppLogger()
@@ -347,6 +373,35 @@ final class WinPinRuntimeSpecTests: XCTestCase {
         XCTAssertNil(items.first { $0.title == "Pin / Unpin Current Window" })
     }
 
+    func testMenuBarMenuShowsUnpinAllWhenWindowsArePinned() {
+        let window = makeWindow(title: "Pinned")
+        let permissionManager = MockPermissionManager(isTrusted: true)
+        let pinManager = PinManager(
+            permissionManager: permissionManager,
+            windowProvider: MockWindowProvider(focusedWindows: [window]),
+            overlayManager: MockOverlayManager(),
+            automaticallyStartTimer: false
+        )
+        pinManager.toggleCurrentWindow()
+        let manager = MenuBarController(
+            permissionManager: permissionManager,
+            pinManager: pinManager,
+            hotKeyManager: HotKeyManager(),
+            onOpenSettings: {}
+        )
+
+        let items = manager.menuItemsForTesting()
+
+        XCTAssertNotNil(items.first { $0.title == MenuBarController.MenuTitle.unpinAll })
+    }
+
+    func testMenuBarMenuHidesUnpinAllWhenNoWindowsArePinned() {
+        let manager = makeMenuBarController()
+        let items = manager.menuItemsForTesting()
+
+        XCTAssertNil(items.first { $0.title == MenuBarController.MenuTitle.unpinAll })
+    }
+
     func testDockMenuListsRequiredRecoveryActions() {
         let appDelegate = AppDelegate()
         let menu = appDelegate.applicationDockMenu(NSApp)
@@ -404,6 +459,26 @@ final class WinPinRuntimeSpecTests: XCTestCase {
         } else {
             UserDefaults.standard.removeObject(forKey: key)
         }
+    }
+
+    private func makeWindow(title: String) -> PinnedWindow {
+        let id = UUID()
+        let snapshot = AXWindowSnapshot(
+            id: id,
+            pid: 100,
+            bundleIdentifier: "com.example.\(title)",
+            appName: "App \(title)",
+            windowTitle: title,
+            frame: CGRect(x: 10, y: 20, width: 300, height: 200),
+            axRole: nil,
+            supportedActions: []
+        )
+        return PinnedWindow(
+            id: id,
+            axElement: AXUIElementCreateSystemWide(),
+            snapshot: snapshot,
+            appIcon: nil
+        )
     }
 }
 

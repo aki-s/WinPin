@@ -9,6 +9,7 @@ final class MenuBarController: NSObject {
         static let appName = "WinPin"
         static let pinnedWindows = "Pinned Windows"
         static let noPinnedWindows = "No pinned windows"
+        static let unpinAll = "Unpin All"
     }
 
     private let permissionManager: AccessibilityPermissionManaging
@@ -176,6 +177,10 @@ final class MenuBarController: NSObject {
             return
         }
 
+        let unpinAllItem = NSMenuItem(title: MenuTitle.unpinAll, action: #selector(unpinAll), keyEquivalent: "")
+        unpinAllItem.target = self
+        menu.addItem(unpinAllItem)
+
         for window in pinManager.pinnedWindows {
             let item = NSMenuItem(
                 title: "\(window.snapshot.appName) - \(window.snapshot.windowTitle)    Pinned",
@@ -211,6 +216,10 @@ final class MenuBarController: NSObject {
             return
         }
         pinManager.unpin(id: id)
+    }
+
+    @objc private func unpinAll() {
+        pinManager.unpinAll()
     }
 
     @objc private func requestAccessibilityPermission() {

@@ -82,6 +82,7 @@ final class PinManager {
             overlayManager.removeOverlay(for: window.id)
         }
         pinnedWindows.removeAll()
+        lastMessage = "No pinned windows."
         updateTimerState()
         notifyChanged()
     }
