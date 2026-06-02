@@ -54,6 +54,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         pinManager.unpinAll()
     }
 
+    func applicationSupportsSecureRestorableState(_ app: NSApplication) -> Bool {
+        // WinPin does not persist custom restorable state, so explicitly opt in to AppKit's secure restoration path.
+        true
+    }
+
     func applicationDockMenu(_ sender: NSApplication) -> NSMenu? {
         AppLogger.shared.log("applicationDockMenu requested")
         let menu = NSMenu()
