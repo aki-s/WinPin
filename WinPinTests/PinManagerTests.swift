@@ -182,6 +182,30 @@ final class PinManagerTests: XCTestCase {
         XCTAssertTrue(logger.messages.contains { $0.contains("stale_candidate=false") })
     }
 
+    func testChangeNotificationHappensAfterUnpinMessageIsUpdated() {
+        let window = makeWindow(title: "Pinned")
+        let permission = MockPermissionManager(isTrusted: true)
+        let provider = MockWindowProvider(focusedWindows: [window])
+        let manager = PinManager(
+            permissionManager: permission,
+            windowProvider: provider,
+            overlayManager: MockOverlayManager(),
+            automaticallyStartTimer: false
+        )
+        var observedMessages: [String?] = []
+        manager.onChange = {
+            observedMessages.append(manager.lastMessage)
+        }
+
+        manager.toggleCurrentWindow()
+        manager.unpin(id: window.id)
+
+        XCTAssertEqual(observedMessages, [
+            "Pinned App Pinned - Pinned.",
+            "No pinned windows."
+        ])
+    }
+
     func testPinFailureWithoutAccessibilityIsLogged() {
         let permission = MockPermissionManager(isTrusted: false)
         let logger = MockAppLogger()

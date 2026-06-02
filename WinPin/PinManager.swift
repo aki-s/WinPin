@@ -20,11 +20,7 @@ final class PinManager {
     private let automaticallyStartTimer: Bool
     private var timer: Timer?
 
-    private(set) var pinnedWindows: [PinnedWindow] = [] {
-        didSet {
-            onChange?()
-        }
-    }
+    private(set) var pinnedWindows: [PinnedWindow] = []
 
     var lastMessage: String?
     var onChange: (() -> Void)?
@@ -49,7 +45,7 @@ final class PinManager {
             lastMessage = "Accessibility permission is required before WinPin can pin windows."
             logger.log("pin_failed reason=accessibility_permission_missing source=\(source.rawValue)")
             permissionManager.requestPermissionPrompt()
-            onChange?()
+            notifyChanged()
             return
         }
 
@@ -63,7 +59,7 @@ final class PinManager {
         } catch {
             lastMessage = error.localizedDescription
             logger.log("pin_failed reason=focused_window_unavailable source=\(source.rawValue) error=\"\(error.localizedDescription)\"")
-            onChange?()
+            notifyChanged()
         }
     }
 
@@ -78,6 +74,7 @@ final class PinManager {
         lastMessage = pinnedWindows.isEmpty ? "No pinned windows." : nil
         raiseLatestPinnedWindowBestEffort()
         updateTimerState()
+        notifyChanged()
     }
 
     func unpinAll() {
@@ -86,6 +83,7 @@ final class PinManager {
         }
         pinnedWindows.removeAll()
         updateTimerState()
+        notifyChanged()
     }
 
     private func pin(_ window: PinnedWindow) {
@@ -100,6 +98,7 @@ final class PinManager {
             logger.log("pin_failed reason=initial_raise_failed ax_error=\(describe(error)) \(describe(window))")
         }
         updateTimerState()
+        notifyChanged()
     }
 
     private func updateTimerState() {
@@ -144,6 +143,7 @@ final class PinManager {
             let staleWindowIDs = staleIDs.map(\.uuidString).sorted().joined(separator: ",")
             logger.log("pin_removed reason=stale_window ids=\(staleWindowIDs)")
             updateTimerState()
+            notifyChanged()
         }
     }
 
@@ -216,5 +216,9 @@ final class PinManager {
         let role = snapshot.axRole ?? "unknown"
         let supportedActions = snapshot.supportedActions.isEmpty ? "none" : snapshot.supportedActions.joined(separator: ",")
         return "window_id=\(window.id.uuidString) pid=\(snapshot.pid) bundle_id=\"\(bundleIdentifier)\" app=\"\(snapshot.appName)\" title=\"\(snapshot.windowTitle)\" frame=\"\(snapshot.frame)\" ax_role=\"\(role)\" ax_supported_actions=\"\(supportedActions)\""
+    }
+
+    private func notifyChanged() {
+        onChange?()
     }
 }
