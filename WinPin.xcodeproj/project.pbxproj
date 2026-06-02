@@ -207,6 +207,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0D70E1122C00000100A00001 /* Assets.xcassets in Resources */,
 				0D70E1132C00000100A00001 /* AppIcon.icns in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -370,6 +371,7 @@
 		0D70E9032C00000100A00001 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -390,6 +392,7 @@
 		0D70E9042C00000100A00001 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
