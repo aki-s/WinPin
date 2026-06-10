@@ -300,6 +300,39 @@ final class PinManagerTests: XCTestCase {
     }
 }
 
+final class AXWindowProviderTests: XCTestCase {
+    func testRaiseReturnsAXRaiseFailureWithoutRetryingFallback() {
+        let window = makeWindow(title: "Pinned")
+        let actionPerformer = MockAXWindowActionPerformer(results: [.failure])
+        let provider = AXWindowProvider(actionPerformer: actionPerformer)
+
+        let error = provider.raise(window)
+
+        XCTAssertEqual(error, .failure)
+        XCTAssertEqual(actionPerformer.raiseCallCount, 1)
+        XCTAssertEqual(actionPerformer.raisedElements.count, 1)
+        XCTAssertTrue(CFEqual(actionPerformer.raisedElements[0], window.axElement))
+    }
+
+    private func makeWindow(title: String) -> PinnedWindow {
+        let id = UUID()
+        let snapshot = AXWindowSnapshot(
+            id: id,
+            pid: 100,
+            bundleIdentifier: "com.example.\(title)",
+            appName: "App \(title)",
+            windowTitle: title,
+            frame: CGRect(x: 10, y: 20, width: 300, height: 200)
+        )
+        return PinnedWindow(
+            id: id,
+            axElement: AXUIElementCreateSystemWide(),
+            snapshot: snapshot,
+            appIcon: nil
+        )
+    }
+}
+
 final class WinPinRuntimeSpecTests: XCTestCase {
     private let showMenuBarItemKey = "showMenuBarItem"
 
@@ -575,5 +608,24 @@ private final class MockAppLogger: AppLogging {
 
     func log(_ message: String) {
         messages.append(message)
+    }
+}
+
+private final class MockAXWindowActionPerformer: AXWindowActionPerforming {
+    private var results: [AXError]
+    private(set) var raiseCallCount = 0
+    private(set) var raisedElements: [AXUIElement] = []
+
+    init(results: [AXError]) {
+        self.results = results
+    }
+
+    func performRaiseAction(on element: AXUIElement) -> AXError {
+        raiseCallCount += 1
+        raisedElements.append(element)
+        guard !results.isEmpty else {
+            return .success
+        }
+        return results.removeFirst()
     }
 }
