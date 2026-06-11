@@ -228,7 +228,7 @@ final class PinManagerTests: XCTestCase {
         manager.unpinAll()
 
         XCTAssertEqual(manager.pinnedWindows.map(\.id), [])
-        XCTAssertEqual(overlay.removedIDs, [first.id, second.id])
+        XCTAssertEqual(overlay.removedIDs, [second.id, first.id])
         XCTAssertEqual(observedMessages.last, "No pinned windows.")
     }
 
@@ -251,7 +251,7 @@ final class PinManagerTests: XCTestCase {
         ])
     }
 
-    func testMaintenanceOnlyRaisesLatestPinnedWindowToAvoidFlicker() {
+    func testMaintenanceRaisesPinnedWindowsFromBottomToTop() {
         let first = makeWindow(title: "First")
         let second = makeWindow(title: "Second")
         let permission = MockPermissionManager(isTrusted: true)
@@ -270,8 +270,237 @@ final class PinManagerTests: XCTestCase {
 
         manager.maintenanceTick()
 
-        XCTAssertEqual(manager.pinnedWindows.map(\.id), [first.id, second.id])
-        XCTAssertEqual(provider.raisedIDs, [second.id])
+        XCTAssertEqual(manager.pinnedWindows.map(\.id), [second.id, first.id])
+        XCTAssertEqual(provider.raisedIDs, [first.id, second.id])
+    }
+
+    func testMaintenanceSkipsPinnedWindowsFromFrontmostApplicationPID() {
+        let first = makeWindow(title: "First", pid: 100)
+        let second = makeWindow(title: "Second", pid: 100)
+        let permission = MockPermissionManager(isTrusted: true)
+        let provider = MockWindowProvider(focusedWindows: [first, second])
+        provider.frontmostProcessIdentifier = 100
+        let overlay = MockOverlayManager()
+        let manager = PinManager(
+            permissionManager: permission,
+            windowProvider: provider,
+            overlayManager: overlay,
+            automaticallyStartTimer: false
+        )
+
+        manager.toggleCurrentWindow()
+        manager.toggleCurrentWindow()
+        provider.raisedIDs.removeAll()
+
+        manager.maintenanceTick()
+
+        XCTAssertEqual(manager.pinnedWindows.map(\.id), [second.id, first.id])
+        XCTAssertEqual(overlay.updatedIDs, [second.id, first.id])
+        XCTAssertEqual(provider.raisedIDs, [])
+    }
+
+    func testMaintenanceStillRaisesNonFrontmostApplicationsFromBottomToTop() {
+        let first = makeWindow(title: "First", pid: 100)
+        let second = makeWindow(title: "Second", pid: 200)
+        let third = makeWindow(title: "Third", pid: 300)
+        let permission = MockPermissionManager(isTrusted: true)
+        let provider = MockWindowProvider(focusedWindows: [first, second, third])
+        provider.frontmostProcessIdentifier = 200
+        let manager = PinManager(
+            permissionManager: permission,
+            windowProvider: provider,
+            overlayManager: MockOverlayManager(),
+            automaticallyStartTimer: false
+        )
+
+        manager.toggleCurrentWindow()
+        manager.toggleCurrentWindow()
+        manager.toggleCurrentWindow()
+        provider.raisedIDs.removeAll()
+
+        manager.maintenanceTick()
+
+        XCTAssertEqual(manager.pinnedWindows.map(\.id), [third.id, second.id, first.id])
+        XCTAssertEqual(provider.raisedIDs, [first.id, third.id])
+    }
+
+    func testMaintenanceBacksOffAfterThreeIdenticalSuccessfulRaiseSequences() {
+        let first = makeWindow(title: "First", pid: 100)
+        let second = makeWindow(title: "Second", pid: 200)
+        let permission = MockPermissionManager(isTrusted: true)
+        let provider = MockWindowProvider(focusedWindows: [first, second])
+        provider.frontmostProcessIdentifier = 999
+        let logger = MockAppLogger()
+        let manager = PinManager(
+            permissionManager: permission,
+            windowProvider: provider,
+            overlayManager: MockOverlayManager(),
+            logger: logger,
+            automaticallyStartTimer: false
+        )
+
+        manager.toggleCurrentWindow()
+        manager.toggleCurrentWindow()
+        provider.raisedIDs.removeAll()
+
+        manager.maintenanceTick()
+        manager.maintenanceTick()
+        manager.maintenanceTick()
+        manager.maintenanceTick()
+
+        XCTAssertEqual(provider.raisedIDs, [
+            first.id, second.id,
+            first.id, second.id,
+            first.id, second.id
+        ])
+        XCTAssertTrue(logger.messages.contains {
+            $0.contains("pin_raise_backoff_started")
+                && $0.contains("consecutive_successes=3")
+                && $0.contains("frontmost_external_pid=999")
+        })
+        XCTAssertFalse(logger.messages.contains { $0.contains("pin_raise_attempted") })
+        XCTAssertFalse(logger.messages.contains { $0.contains("pin_raise_succeeded operation=maintenance") })
+    }
+
+    func testMaintenanceDoesNotBackOffSinglePinnedWindow() {
+        let window = makeWindow(title: "Pinned", pid: 100)
+        let permission = MockPermissionManager(isTrusted: true)
+        let provider = MockWindowProvider(focusedWindows: [window])
+        provider.frontmostProcessIdentifier = 999
+        let logger = MockAppLogger()
+        let manager = PinManager(
+            permissionManager: permission,
+            windowProvider: provider,
+            overlayManager: MockOverlayManager(),
+            logger: logger,
+            automaticallyStartTimer: false
+        )
+
+        manager.toggleCurrentWindow()
+        provider.raisedIDs.removeAll()
+
+        manager.maintenanceTick()
+        manager.maintenanceTick()
+        manager.maintenanceTick()
+        manager.maintenanceTick()
+
+        XCTAssertEqual(provider.raisedIDs, [window.id, window.id, window.id, window.id])
+        XCTAssertFalse(logger.messages.contains { $0.contains("pin_raise_backoff_started") })
+    }
+
+    func testMaintenanceBackoffResumesWhenFrontmostApplicationChanges() {
+        let first = makeWindow(title: "First", pid: 100)
+        let second = makeWindow(title: "Second", pid: 200)
+        let permission = MockPermissionManager(isTrusted: true)
+        let provider = MockWindowProvider(focusedWindows: [first, second])
+        provider.frontmostProcessIdentifier = 999
+        let logger = MockAppLogger()
+        let manager = PinManager(
+            permissionManager: permission,
+            windowProvider: provider,
+            overlayManager: MockOverlayManager(),
+            logger: logger,
+            automaticallyStartTimer: false
+        )
+
+        manager.toggleCurrentWindow()
+        manager.toggleCurrentWindow()
+        provider.raisedIDs.removeAll()
+        manager.maintenanceTick()
+        manager.maintenanceTick()
+        manager.maintenanceTick()
+        manager.maintenanceTick()
+
+        provider.frontmostProcessIdentifier = 998
+        manager.maintenanceTick()
+
+        XCTAssertEqual(provider.raisedIDs, [
+            first.id, second.id,
+            first.id, second.id,
+            first.id, second.id,
+            first.id, second.id
+        ])
+        XCTAssertTrue(logger.messages.contains {
+            $0.contains("pin_raise_backoff_resumed reason=frontmost_application_changed")
+        })
+    }
+
+    func testMaintenanceBackoffResumesWhenWindowSnapshotChanges() {
+        let first = makeWindow(title: "First", pid: 100)
+        let second = makeWindow(title: "Second", pid: 200)
+        let permission = MockPermissionManager(isTrusted: true)
+        let provider = MockWindowProvider(focusedWindows: [first, second])
+        provider.frontmostProcessIdentifier = 999
+        let logger = MockAppLogger()
+        let manager = PinManager(
+            permissionManager: permission,
+            windowProvider: provider,
+            overlayManager: MockOverlayManager(),
+            logger: logger,
+            automaticallyStartTimer: false
+        )
+        var shouldMoveFirstWindow = false
+        provider.refreshHandler = { window in
+            guard shouldMoveFirstWindow, window.id == first.id else {
+                return
+            }
+            let old = window.snapshot
+            window.snapshot = AXWindowSnapshot(
+                id: old.id,
+                pid: old.pid,
+                bundleIdentifier: old.bundleIdentifier,
+                appName: old.appName,
+                windowTitle: old.windowTitle,
+                frame: CGRect(x: 30, y: 40, width: 300, height: 200),
+                axRole: old.axRole,
+                supportedActions: old.supportedActions
+            )
+        }
+
+        manager.toggleCurrentWindow()
+        manager.toggleCurrentWindow()
+        provider.raisedIDs.removeAll()
+        manager.maintenanceTick()
+        manager.maintenanceTick()
+        manager.maintenanceTick()
+        manager.maintenanceTick()
+
+        shouldMoveFirstWindow = true
+        manager.maintenanceTick()
+
+        XCTAssertEqual(provider.raisedIDs, [
+            first.id, second.id,
+            first.id, second.id,
+            first.id, second.id,
+            first.id, second.id
+        ])
+        XCTAssertTrue(logger.messages.contains {
+            $0.contains("pin_raise_backoff_resumed reason=window_snapshot_changed")
+        })
+    }
+
+    func testMovePinnedWindowChangesRaiseOrder() {
+        let first = makeWindow(title: "First")
+        let second = makeWindow(title: "Second")
+        let third = makeWindow(title: "Third")
+        let permission = MockPermissionManager(isTrusted: true)
+        let provider = MockWindowProvider(focusedWindows: [first, second, third])
+        let manager = PinManager(
+            permissionManager: permission,
+            windowProvider: provider,
+            overlayManager: MockOverlayManager(),
+            automaticallyStartTimer: false
+        )
+
+        manager.toggleCurrentWindow()
+        manager.toggleCurrentWindow()
+        manager.toggleCurrentWindow()
+        provider.raisedIDs.removeAll()
+
+        manager.movePinnedWindow(id: first.id, relativeTo: third.id, placement: .before)
+
+        XCTAssertEqual(manager.pinnedWindows.map(\.id), [first.id, third.id, second.id])
+        XCTAssertEqual(provider.raisedIDs, [second.id, third.id, first.id])
     }
 
     private func makeWindow(
@@ -428,6 +657,46 @@ final class WinPinRuntimeSpecTests: XCTestCase {
         XCTAssertNotNil(items.first { $0.title == MenuBarController.MenuTitle.unpinAll })
     }
 
+    func testMenuBarPinnedWindowRowsUseCustomDragViews() throws {
+        let window = makeWindow(title: "Pinned")
+        let permissionManager = MockPermissionManager(isTrusted: true)
+        let pinManager = PinManager(
+            permissionManager: permissionManager,
+            windowProvider: MockWindowProvider(focusedWindows: [window]),
+            overlayManager: MockOverlayManager(),
+            automaticallyStartTimer: false
+        )
+        pinManager.toggleCurrentWindow()
+        let manager = MenuBarController(
+            permissionManager: permissionManager,
+            pinManager: pinManager,
+            hotKeyManager: HotKeyManager(),
+            onOpenSettings: {}
+        )
+
+        let items = manager.menuItemsForTesting()
+        let row = items.first { $0.representedObject as? UUID == window.id }
+        let unpinAll = items.first { $0.title == MenuBarController.MenuTitle.unpinAll }
+        let rowView = try XCTUnwrap(row?.view)
+        rowView.layout()
+        let trashButton = try XCTUnwrap(rowView.subviews.first {
+            $0.identifier?.rawValue == "PinnedWindowMenuItemTrashButton"
+        })
+        let dragIcon = try XCTUnwrap(rowView.subviews.first {
+            $0.identifier?.rawValue == "PinnedWindowMenuItemDragIcon"
+        } as? NSImageView)
+        let appIcon = try XCTUnwrap(rowView.subviews.first {
+            $0.identifier?.rawValue == "PinnedWindowMenuItemAppIcon"
+        })
+
+        XCTAssertEqual(rowView.identifier?.rawValue, "PinnedWindowMenuItemView")
+        XCTAssertTrue(rowView.toolTip?.contains("Drag to reorder") == true)
+        XCTAssertLessThan(trashButton.frame.minX, dragIcon.frame.minX)
+        XCTAssertLessThan(dragIcon.frame.minX, appIcon.frame.minX)
+        XCTAssertNotNil(dragIcon.image)
+        XCTAssertNotNil(unpinAll?.image)
+    }
+
     func testMenuBarMenuHidesUnpinAllWhenNoWindowsArePinned() {
         let manager = makeMenuBarController()
         let items = manager.menuItemsForTesting()
@@ -553,6 +822,8 @@ private final class MockWindowProvider: WindowProviding {
     var focusedWindows: [PinnedWindow]
     var refreshResults: [AXError] = []
     var raiseResults: [AXError] = []
+    var frontmostProcessIdentifier: pid_t?
+    var refreshHandler: ((PinnedWindow) -> Void)?
     private(set) var refreshCallCount = 0
     var raisedIDs: [UUID] = []
 
@@ -574,10 +845,20 @@ private final class MockWindowProvider: WindowProviding {
 
     func refreshSnapshot(for pinnedWindow: PinnedWindow) -> AXError {
         refreshCallCount += 1
+        let result: AXError
         if refreshResults.isEmpty {
-            return .success
+            result = .success
+        } else {
+            result = refreshResults.removeFirst()
         }
-        return refreshResults.removeFirst()
+        if result == .success {
+            refreshHandler?(pinnedWindow)
+        }
+        return result
+    }
+
+    func frontmostExternalApplicationProcessIdentifier() -> pid_t? {
+        frontmostProcessIdentifier
     }
 
     func representsSameWindow(_ lhs: PinnedWindow, _ rhs: PinnedWindow) -> Bool {

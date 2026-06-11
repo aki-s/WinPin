@@ -89,7 +89,8 @@ macOS does not provide a stable public API to mark another app's existing window
 - If the target app/window disappears, treat the pin as stale and remove it automatically.
 - Treat focused-window lookup and raise support as diagnosable preconditions, not assumptions: log the trigger source, raw AX errors, focused app identity, AX role, and supported actions before deciding whether a failure is timing-related, unsupported, or stale.
 - If system-wide focused-app lookup has no value, fall back to the current or last external frontmost app before giving up; menu bar and global-hotkey delivery can otherwise leave Accessibility with no focused app at the instant WinPin asks.
-- Avoid repeatedly raising every pinned window on each maintenance tick. Multiple pins are inherently competing raise requests, so maintenance should keep snapshots/overlays fresh for all pins but only raise the most recent available pin to avoid visible flicker.
+- Keep pinned-window snapshots and overlays fresh for all pins. During maintenance, apply `AXRaise` from the bottom of the pinned list to the top so the menu order maps to visual stacking: rows higher in the menu should end up higher on screen.
+- Skip maintenance `AXRaise` for pinned windows whose PID matches the current or last external frontmost app. This reduces flicker and input interference when the user is typing into another window from the same app, such as a Google Meet input in Chrome, while preserving overlay/stale-window maintenance.
 
 ### 4.4 Space / Fullscreen Support
 
@@ -145,8 +146,8 @@ WinPin
 Pin Current Window / Unpin Current Window
 
 Pinned Windows
-  [App Icon] App Name — Window Title     ✓ Pinned
-  [App Icon] App Name — Window Title     ✓ Pinned
+  [Trash] [Drag] [App Icon] App Name — Window Title
+  [Trash] [Drag] [App Icon] App Name — Window Title
 
 Settings…
 Quit WinPin
@@ -197,11 +198,11 @@ When the user clicks the WinPin menu bar item, show the list of windows currentl
 
 Each list item must show:
 
+- Drag affordance.
+- Unpin action at the left edge.
 - App icon.
 - App name.
 - Window title.
-- Pin status.
-- Action to unpin that item.
 
 If a pinned window becomes unavailable:
 
@@ -211,8 +212,10 @@ If a pinned window becomes unavailable:
 
 When multiple windows are pinned:
 
-- Later pins win.
-- Keep pinned windows refreshed, but only raise the most recent available pinned window during maintenance to avoid visible flicker from competing raise requests.
+- Later pins are inserted at the top by default.
+- Drag and drop reorders pinned windows. Higher rows have higher visual priority.
+- Keep pinned windows refreshed, and apply eligible `AXRaise` calls from bottom to top during maintenance.
+- Do not maintenance-raise pinned windows from the frontmost app PID; the user may be typing into another same-app window.
 - Overlay stacking/order polish is Tier 2; for MVP, keep overlays correct and non-interactive without over-optimizing visual z-order.
 
 ### 5.5 Global Keyboard Shortcut Toggle
@@ -351,10 +354,11 @@ Responsibilities:
 
 Raise strategy:
 
-- Use a conservative timer initially, e.g. every 250–500 ms while at least one window is pinned.
+- Use a short timer while at least one window is pinned. The current implementation uses 100 ms and limits maintenance raise interference by skipping the frontmost app PID.
+- Apply eligible raises from the bottom of the pinned list to the top so the top menu row has final visual priority.
 - Optionally add `AXObserver` later for focus/window-change events.
 - Avoid excessive CPU usage.
-- Avoid raising stale/missing windows.
+- Avoid raising stale/missing windows or windows from the current/last external frontmost app PID.
 
 ### 6.6 `BorderOverlayManager`
 
@@ -500,9 +504,10 @@ Do not implement these in the first version unless the core MVP is complete:
 
 - User can pin the currently focused window.
 - Pinning uses window-level Accessibility action, not app-level activation as the primary mechanism.
-- The most recent available pinned window is repeatedly raised while pinned; older pins remain tracked and highlighted without being raised every tick.
-- Other windows from the same app should not intentionally be raised by WinPin.
-- If multiple windows are pinned, the most recently pinned window wins the raise order.
+- Pinned windows are ordered by the Pinned Windows menu. Higher rows have higher visual priority.
+- Maintenance applies eligible raises from bottom to top so the top menu row wins the raise order.
+- Pinned windows from the current/last external frontmost app PID are refreshed but not maintenance-raised, reducing same-app input interference and flicker.
+- Other unpinned windows from the same app should not intentionally be raised by WinPin.
 
 ### 10.4 Unpinning
 
@@ -513,7 +518,8 @@ Do not implement these in the first version unless the core MVP is complete:
 ### 10.5 Pinned List
 
 - Menu shows pinned windows.
-- Each pinned item shows app icon, app name, and window title.
+- Each pinned item shows an unpin icon, drag affordance, app icon, app name, and window title.
+- Drag and drop changes pinned-window order.
 - Closed/stale windows are automatically removed and handled safely.
 
 ### 10.6 Shortcut Settings
@@ -555,6 +561,7 @@ Tier 1 MVP scope:
 Known Tier 1 fixes:
 
 - [ ] Some apps, including `cmux`, still cannot be pinned even when Accessibility reports an `AXWindow` with `AXRaise`.
+- [x] Maintenance raise skips pinned windows from the frontmost app PID to reduce same-app input interference and flicker.
 - [x] The Settings window opened with `Cmd+,` can be closed with `Cmd+W`.
 - [x] The app icon is missing in System Settings > Privacy & Security > Accessibility.
 - [x] Before Accessibility permission is granted, the menu bar UI exposes one clear Accessibility request action instead of multiple permission-setting routes.
@@ -570,6 +577,7 @@ Tier 2 scope:
 
 - [ ] Multiple-pinned-window visual polish, including overlay stacking/order behavior.
 - [ ] Additional refinement beyond correct pin order and non-interactive overlays.
+- [ ] Investigate a Meet/Zoom-style WinPin-owned floating preview mode instead of repeatedly raising third-party windows. Current `AXRaise`-based pinning mutates the real app window order on a timer and can make same-app pinned windows compete with the window the user is typing into, causing flicker or input interference. A WinPin-owned floating preview panel would keep WinPin's own surface on top without continuously reordering another app's windows, but it requires capture-permission, live-preview, and click/activation behavior design before it can replace the current approach.
 
 Tier 3 scope:
 

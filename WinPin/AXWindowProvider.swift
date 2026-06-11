@@ -25,6 +25,7 @@ protocol WindowProviding {
     func focusedWindow() throws -> PinnedWindow
     func raise(_ pinnedWindow: PinnedWindow) -> AXError
     func refreshSnapshot(for pinnedWindow: PinnedWindow) -> AXError
+    func frontmostExternalApplicationProcessIdentifier() -> pid_t?
     func representsSameWindow(_ lhs: PinnedWindow, _ rhs: PinnedWindow) -> Bool
 }
 
@@ -144,6 +145,16 @@ final class AXWindowProvider: WindowProviding {
             supportedActions: old.supportedActions
         )
         return .success
+    }
+
+    func frontmostExternalApplicationProcessIdentifier() -> pid_t? {
+        if let frontmost = Self.externalFrontmostApplication() {
+            return frontmost.processIdentifier
+        }
+        if let lastExternalFrontmostApplication, !lastExternalFrontmostApplication.isTerminated {
+            return lastExternalFrontmostApplication.processIdentifier
+        }
+        return nil
     }
 
     func representsSameWindow(_ lhs: PinnedWindow, _ rhs: PinnedWindow) -> Bool {

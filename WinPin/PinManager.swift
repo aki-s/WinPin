@@ -8,9 +8,27 @@ final class PinManager {
         case unknown = "unknown"
     }
 
+    enum MovePlacement {
+        case before
+        case after
+    }
+
     private enum Constants {
         static let raiseInterval: TimeInterval = 0.10
         static let maxConsecutiveMaintenanceFailures = 3
+        static let maxConsecutiveSuccessfulRaiseSequences = 3
+    }
+
+    private struct RaiseSequenceSignature: Equatable {
+        let frontmostApplicationPID: pid_t?
+        let raisedWindowIDs: [UUID]
+        let snapshots: [AXWindowSnapshot]
+    }
+
+    private struct RaiseBackoffState {
+        var signature: RaiseSequenceSignature?
+        var consecutiveSuccessCount = 0
+        var isBackedOff = false
     }
 
     private let permissionManager: AccessibilityPermissionManaging
@@ -19,6 +37,7 @@ final class PinManager {
     private let logger: AppLogging
     private let automaticallyStartTimer: Bool
     private var timer: Timer?
+    private var raiseBackoffState = RaiseBackoffState()
 
     private(set) var pinnedWindows: [PinnedWindow] = []
 
@@ -64,20 +83,28 @@ final class PinManager {
     }
 
     func unpin(id: UUID) {
+        var didRemoveWindow = false
         pinnedWindows.removeAll { window in
             if window.id == id {
                 overlayManager.removeOverlay(for: window.id)
+                didRemoveWindow = true
                 return true
             }
             return false
         }
+        if didRemoveWindow {
+            resetRaiseBackoff(reason: "pin_removed")
+        }
         lastMessage = pinnedWindows.isEmpty ? "No pinned windows." : nil
-        raiseLatestPinnedWindowBestEffort()
+        raisePinnedWindowsBestEffort()
         updateTimerState()
         notifyChanged()
     }
 
     func unpinAll() {
+        if !pinnedWindows.isEmpty {
+            resetRaiseBackoff(reason: "all_pins_removed")
+        }
         for window in pinnedWindows {
             overlayManager.removeOverlay(for: window.id)
         }
@@ -87,9 +114,38 @@ final class PinManager {
         notifyChanged()
     }
 
+    func movePinnedWindow(id: UUID, relativeTo targetID: UUID, placement: MovePlacement) {
+        guard id != targetID,
+              let currentIndex = pinnedWindows.firstIndex(where: { $0.id == id }),
+              let targetIndex = pinnedWindows.firstIndex(where: { $0.id == targetID }) else {
+            return
+        }
+
+        let originalOrder = pinnedWindows.map(\.id)
+        let window = pinnedWindows.remove(at: currentIndex)
+        var destinationIndex = targetIndex
+        if currentIndex < targetIndex {
+            destinationIndex -= 1
+        }
+        if placement == .after {
+            destinationIndex += 1
+        }
+        destinationIndex = min(max(destinationIndex, 0), pinnedWindows.count)
+        pinnedWindows.insert(window, at: destinationIndex)
+
+        guard pinnedWindows.map(\.id) != originalOrder else {
+            return
+        }
+
+        resetRaiseBackoff(reason: "pin_order_changed")
+        raisePinnedWindowsBestEffort()
+        notifyChanged()
+    }
+
     private func pin(_ window: PinnedWindow) {
         let error = windowProvider.raise(window)
-        pinnedWindows.append(window)
+        pinnedWindows.insert(window, at: 0)
+        resetRaiseBackoff(reason: "pin_added")
         overlayManager.showOverlay(for: window)
         if error == .success {
             lastMessage = "Pinned \(window.snapshot.appName) - \(window.snapshot.windowTitle)."
@@ -148,43 +204,72 @@ final class PinManager {
         }
     }
 
-    private func raiseLatestPinnedWindowBestEffort() {
-        // Repeatedly raising every pinned window can make overlapping pins flicker.
-        // The newest pin is the effective frontmost pin.
-        guard let window = pinnedWindows.last else {
-            return
+    private func raisePinnedWindowsBestEffort() {
+        for window in pinnedWindows.reversed() {
+            _ = windowProvider.raise(window)
         }
-        _ = windowProvider.raise(window)
     }
 
     private func maintainPinnedWindows(staleIDs: inout Set<UUID>) {
-        var newestAvailableWindow: PinnedWindow?
+        var availableWindows: [PinnedWindow] = []
+        let frontmostApplicationPID = windowProvider.frontmostExternalApplicationProcessIdentifier()
 
         for window in pinnedWindows {
             let refreshError = windowProvider.refreshSnapshot(for: window)
             guard refreshError == .success else {
+                resetRaiseBackoff(reason: "refresh_failed")
                 markMaintenanceFailure(for: window, error: refreshError, operation: "refresh", staleIDs: &staleIDs)
                 continue
             }
 
             overlayManager.updateOverlay(for: window)
-            newestAvailableWindow = window
+            availableWindows.append(window)
         }
 
-        guard let newestAvailableWindow else {
+        let raiseCandidates = availableWindows.reversed().filter { window in
+            guard let frontmostApplicationPID else {
+                return true
+            }
+            return window.snapshot.pid != frontmostApplicationPID
+        }
+
+        guard !raiseCandidates.isEmpty else {
+            resetRaiseBackoff(reason: "no_raise_candidates")
             return
         }
 
-        let raiseError = windowProvider.raise(newestAvailableWindow)
-        if raiseError != .success {
-            markRaiseFailure(for: newestAvailableWindow, error: raiseError)
-        } else {
-            if newestAvailableWindow.maintenanceFailureCount > 0 || newestAvailableWindow.raiseFailureCount > 0 || newestAvailableWindow.isStale {
-                logger.log("pin_succeeded reason=maintenance_recovered \(describe(newestAvailableWindow))")
+        let signature = RaiseSequenceSignature(
+            frontmostApplicationPID: frontmostApplicationPID,
+            raisedWindowIDs: raiseCandidates.map(\.id),
+            snapshots: availableWindows.map(\.snapshot)
+        )
+
+        if raiseBackoffState.isBackedOff {
+            if raiseBackoffState.signature == signature {
+                return
             }
-            newestAvailableWindow.maintenanceFailureCount = 0
-            newestAvailableWindow.raiseFailureCount = 0
-            newestAvailableWindow.isStale = false
+            resetRaiseBackoff(reason: resumeReason(previous: raiseBackoffState.signature, current: signature))
+        }
+
+        var allRaisesSucceeded = true
+        for window in raiseCandidates {
+            let raiseError = windowProvider.raise(window)
+            if raiseError != .success {
+                allRaisesSucceeded = false
+                resetRaiseBackoff(reason: "raise_failed")
+                markRaiseFailure(for: window, error: raiseError)
+            } else {
+                if window.maintenanceFailureCount > 0 || window.raiseFailureCount > 0 || window.isStale {
+                    logger.log("pin_succeeded reason=maintenance_recovered \(describe(window))")
+                }
+                window.maintenanceFailureCount = 0
+                window.raiseFailureCount = 0
+                window.isStale = false
+            }
+        }
+
+        if allRaisesSucceeded {
+            recordSuccessfulRaiseSequence(signature)
         }
     }
 
@@ -209,6 +294,64 @@ final class PinManager {
 
     private func describe(_ error: AXError) -> String {
         "\(error)(rawValue=\(error.rawValue))"
+    }
+
+    private func describe(_ processIdentifier: pid_t?) -> String {
+        guard let processIdentifier else {
+            return "none"
+        }
+        return "\(processIdentifier)"
+    }
+
+    private func resetRaiseBackoff(reason: String) {
+        let wasBackedOff = raiseBackoffState.isBackedOff
+        raiseBackoffState = RaiseBackoffState()
+        if wasBackedOff {
+            logger.log("pin_raise_backoff_resumed reason=\(reason)")
+        }
+    }
+
+    private func recordSuccessfulRaiseSequence(_ signature: RaiseSequenceSignature) {
+        guard signature.raisedWindowIDs.count > 1 else {
+            raiseBackoffState = RaiseBackoffState()
+            return
+        }
+
+        if raiseBackoffState.signature == signature {
+            raiseBackoffState.consecutiveSuccessCount += 1
+        } else {
+            raiseBackoffState.signature = signature
+            raiseBackoffState.consecutiveSuccessCount = 1
+            raiseBackoffState.isBackedOff = false
+        }
+
+        guard !raiseBackoffState.isBackedOff,
+              raiseBackoffState.consecutiveSuccessCount >= Constants.maxConsecutiveSuccessfulRaiseSequences else {
+            return
+        }
+
+        raiseBackoffState.isBackedOff = true
+        logger.log("pin_raise_backoff_started consecutive_successes=\(raiseBackoffState.consecutiveSuccessCount) frontmost_external_pid=\(describe(signature.frontmostApplicationPID)) raised_window_ids=\(describe(signature.raisedWindowIDs))")
+    }
+
+    private func resumeReason(previous: RaiseSequenceSignature?, current: RaiseSequenceSignature) -> String {
+        guard let previous else {
+            return "raise_sequence_changed"
+        }
+        if previous.frontmostApplicationPID != current.frontmostApplicationPID {
+            return "frontmost_application_changed"
+        }
+        if previous.raisedWindowIDs != current.raisedWindowIDs {
+            return "raise_sequence_changed"
+        }
+        if previous.snapshots != current.snapshots {
+            return "window_snapshot_changed"
+        }
+        return "raise_sequence_changed"
+    }
+
+    private func describe(_ ids: [UUID]) -> String {
+        ids.map(\.uuidString).joined(separator: ",")
     }
 
     private func describe(_ window: PinnedWindow) -> String {

@@ -15,11 +15,11 @@ Implemented:
 - Fixed global shortcut: `Control + Option + Command + T`
 - Timer-based `kAXRaiseAction` maintenance loop
 - Yellow non-interactive `NSPanel` border overlay
-- Pinned window list with app icon, app name, and window title
+- Pinned window list with drag handles, app icons, app names, window titles, and unpin buttons
 - Stale window cleanup
-- Multiple pinned windows use later-pin-wins raise order
+- Multiple pinned windows use menu order: higher rows are raised above lower rows
 - Settings window for toggling the Dock icon
-- Unit tests for pin overlay creation, transient stale handling, stale removal, and later-pin-wins raise order
+- Unit tests for pin overlay creation, transient stale handling, stale removal, and menu-order raise behavior
 
 Not implemented yet:
 
