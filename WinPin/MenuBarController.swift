@@ -167,16 +167,19 @@ final class MenuBarController: NSObject {
         if permissionManager.isTrusted {
             let item = NSMenuItem(title: "Accessibility: Allowed", action: nil, keyEquivalent: "")
             item.isEnabled = false
+            item.image = Self.symbolImage("checkmark.seal")
             menu.addItem(item)
             return
         }
 
         let status = NSMenuItem(title: "Accessibility: Required", action: nil, keyEquivalent: "")
         status.isEnabled = false
+        status.image = Self.symbolImage("xmark.seal")
         menu.addItem(status)
 
         let prompt = NSMenuItem(title: "Request Accessibility Permission", action: #selector(requestAccessibilityPermission), keyEquivalent: "")
         prompt.target = self
+        prompt.image = Self.symbolImage("accessibility")
         menu.addItem(prompt)
     }
 
@@ -371,7 +374,7 @@ private final class PinnedWindowMenuItemView: NSView, NSDraggingSource {
         titleField.maximumNumberOfLines = 1
         titleField.toolTip = title
 
-        unpinButton = NSButton(image: Self.symbolImage("trash") ?? NSImage(), target: nil, action: nil)
+        unpinButton = NSButton(image: Self.symbolImage("pin.slash") ?? NSImage(), target: nil, action: nil)
         unpinButton.identifier = NSUserInterfaceItemIdentifier("PinnedWindowMenuItemTrashButton")
         unpinButton.bezelStyle = .regularSquare
         unpinButton.isBordered = false
@@ -604,7 +607,7 @@ private final class PinnedWindowMenuItemView: NSView, NSDraggingSource {
     }
 
     private static func dragIcon() -> NSImage {
-        symbolImage("hand.draw")
+        symbolImage("hand.pinch")
             ?? symbolImage("hand.point.up.left")
             ?? symbolImage("line.3.horizontal")
             ?? NSImage()
