@@ -428,11 +428,13 @@ private final class PinnedWindowMenuItemView: NSView, NSDraggingSource {
         appIconView.frame = NSRect(x: x, y: iconY, width: Layout.iconSize, height: Layout.iconSize)
         x += Layout.iconSize + Layout.gap
 
+        let fieldHeight = titleField.intrinsicContentSize.height
+        let titleY = (bounds.height - fieldHeight) / 2
         titleField.frame = NSRect(
             x: x,
-            y: 0,
+            y: titleY,
             width: max(0, bounds.maxX - Layout.horizontalPadding - x),
-            height: bounds.height
+            height: fieldHeight
         )
     }
 
