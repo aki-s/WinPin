@@ -26,8 +26,9 @@ jobs:
     # ref. .github/workflows/lint.yml
     runs-on: macos-26
     steps:
-      - name: Checkout
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - name: Checkout target code of build
+        # https://github.com/actions/checkout/commit/9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           ref: refs/tags/${{ inputs.tag }}
           fetch-depth: 0
@@ -49,7 +50,7 @@ jobs:
     needs: build
     runs-on: macos-26
     steps:
-      - name: Checkout
+      - name: Checkout only for .goreleaser.yaml
         # https://github.com/actions/checkout/commit/9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
@@ -63,31 +64,33 @@ jobs:
           cache: true # cache is only effective for golang projects.
           # Path to dependency files for caching
           cache-dependency-path: ".github/workflows/dummy/go.mod"
-      - name: Download artifacts
-        uses: ./.github/actions/download-artifact/
-      - name: "[DEBUG] Display structure of downloaded files"
-        run: find .goreleaser/ -type f
       - name: Install GoReleaser
         uses: goreleaser/goreleaser-action@f06c13b6b1a9625abc9e6e439d9c05a8f2190e94 #v7.2.3
         with:
           install-only: true
       - name: "[DEBUG] Show GoReleaser version"
         run: goreleaser -v
-      - name: Run GoReleaser (Prepare artifacts)
+
+      - name: Download releaser targets
+        uses: ./.github/actions/download-artifact/
+      - name: "[DEBUG] Display structure of downloaded files"
+        run: find .goreleaser/ -type f
+
+      - name: Run GoReleaser (Prepare *.zip and homebrew/Casks/win-pin.rb)
         id: goreleaser_release
         uses: goreleaser/goreleaser-action@f06c13b6b1a9625abc9e6e439d9c05a8f2190e94 #v7.2.3
         with:
           distribution: goreleaser
           version: "~> v2"
           args: release --clean --verbose
-          # args: release --clean --verbose --skip=announce,publish,validate
-          # args: release --verbose --skip=archive
         env:
           # GITHUB_TOKEN is required. ref.: https://goreleaser.com/customization/ci/actions/#token-permissions
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HOMEBREW_TAP_GITHUB_TOKEN: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
           #; GORERELEASER_CURRENT_TAG ref. https://goreleaser.com/resources/cookbooks/set-a-custom-git-tag/
           GORELEASER_CURRENT_TAG: ${{ inputs.tag }}
+      - name: "[DEBUG] Show GoReleaser artifacts"
+        run: echo '${{ steps.goreleaser_release.outputs.artifacts }}'
       - name: "[DEBUG] Display structure of dist files"
         run: find dist/ -type f
 
@@ -102,8 +105,34 @@ jobs:
         run: |
           brew --version
           brew --prefix
+
       - name: "format and lint cask file"
-        run: HOMEBREW_DEVELOPER=1 brew style -d --cask --fix ./dist/homebrew/Casks/win-pin.rb
-      ##; It looks there's no rubocop.yml, although it exists in localhost(Homebrew 6.0.6-80-g72ba737).
-      - name: Show GoReleaser artifacts
-        run: echo '${{ steps.goreleaser_release.outputs.artifacts }}'
+        run: HOMEBREW_DEVELOPER=1 brew style --fix ./dist/homebrew/Casks/win-pin.rb
+
+      - name: Checkout tap branch and put fixed cask file
+        run: |
+          git clone --branch "win-pin-${{ inputs.tag }}" https://x-access-token:${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}@github.com/aki-s/homebrew-tap.git tap-repo
+          mkdir -p tap-repo/Casks/
+          cp ./dist/homebrew/Casks/win-pin.rb tap-repo/Casks/
+          cd tap-repo
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if ! git diff --quiet; then
+            git add Casks/win-pin.rb
+            git commit -m "style: fix brew style for win-pin"
+            git push origin "win-pin-${{ inputs.tag }}"
+          fi
+
+      - name: Create Pull Request via GitHub CLI
+        run: |
+          cd tap-repo
+          gh pr create \
+            --repo aki-s/homebrew-tap \
+            --head "win-pin-${{ inputs.tag }}" \
+            --base main \
+            --title "Brew cask update for win-pin version ${{ inputs.tag }}" \
+            --body "" \
+            --draft
+        env:
+          GH_TOKEN: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
+
