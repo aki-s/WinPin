@@ -65,10 +65,12 @@ homebrew_casks:
   - name: win-pin
     # binary: "" # empty value falls back to the default value using 'name:'
     binary: "#{appdir}/WinPin.app/Contents/MacOS/WinPin"
+    # 'custom_block' is placed at the top of the cask definition.
+    # THIS MEANS 'brew style --fix Casks/win-pin.rb' is mandatory.
     custom_block: |
       app "WinPin.app"
       # Only :ventura(.13) and above is supported.
-      depends_on macos: ">= :ventura"
+      depends_on macos: :ventura
       binary "#{appdir}/WinPin.app/Contents/MacOS/WinPin", target: "win-pin"
 
     # Directory inside the repository to put the cask.
