@@ -1,7 +1,12 @@
 import AppKit
 import Carbon.HIToolbox
 
-private let hotKeyEventSignature = OSType(UInt32(UInt8(ascii: "W")) << 24 | UInt32(UInt8(ascii: "P")) << 16 | UInt32(UInt8(ascii: "I")) << 8 | UInt32(UInt8(ascii: "N")))
+private let hotKeyEventSignature = OSType(
+    UInt32(UInt8(ascii: "W")) << 24
+        | UInt32(UInt8(ascii: "P")) << 16
+        | UInt32(UInt8(ascii: "I")) << 8
+        | UInt32(UInt8(ascii: "N"))
+)
 private let hotKeyEventID = UInt32(1)
 
 final class HotKeyManager {

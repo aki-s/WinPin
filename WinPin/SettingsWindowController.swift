@@ -4,7 +4,10 @@ final class SettingsWindowController: NSWindowController {
     var onDockPreferenceChanged: ((Bool) -> Void)?
 
     private let showDockCheckbox = NSButton(checkboxWithTitle: "Show Dock icon", target: nil, action: nil)
-    private let explanationLabel = NSTextField(labelWithString: "When enabled, WinPin appears in the Dock and Cmd+Tab switcher. When disabled, use the menu bar item or recovery launch to reopen settings.")
+    private let explanationLabel = NSTextField(
+        labelWithString: "When enabled, WinPin appears in the Dock and Cmd+Tab switcher. "
+            + "When disabled, use the menu bar item or recovery launch to reopen settings."
+    )
 
     init() {
         let contentView = NSView(frame: NSRect(x: 0, y: 0, width: 420, height: 150))

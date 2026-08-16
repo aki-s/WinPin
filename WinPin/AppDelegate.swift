@@ -36,7 +36,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidFinishLaunching(_: Notification) {
-        AppLogger.shared.log("applicationDidFinishLaunching args=\(CommandLine.arguments) showDockPreference=\(AppPreferences.showDockIcon)")
+        AppLogger.shared.log(
+            "applicationDidFinishLaunching args=\(CommandLine.arguments) "
+                + "showDockPreference=\(AppPreferences.showDockIcon)"
+        )
         installMainMenu()
         configureSettingsWindow()
         menuBarController.start()
@@ -45,7 +48,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.pinManager.toggleCurrentWindow(source: .hotKey)
         }
         hotKeyManager.registerDefaultHotKey()
-        AppLogger.shared.log("applicationDidFinishLaunching completed activationPolicy=\(NSApp.activationPolicy().rawValue)")
+        AppLogger.shared.log(
+            "applicationDidFinishLaunching completed activationPolicy=\(NSApp.activationPolicy().rawValue)"
+        )
     }
 
     func applicationWillTerminate(_: Notification) {

@@ -98,7 +98,15 @@ final class AXWindowProvider: WindowProviding {
         let bundleIdentifier = runningApp?.bundleIdentifier
         let role = stringAttribute(kAXRoleAttribute, from: focusedWindow)
         let actions = actionNames(for: focusedWindow)
-        logger.log("focused_window_detected pid=\(pid) bundle_id=\"\(bundleIdentifier ?? "unknown")\" app=\"\(appName)\" title=\"\(title.isEmpty ? "Untitled Window" : title)\" role=\"\(role ?? "unknown")\" actions=\"\(actions.isEmpty ? "none" : actions.joined(separator: ","))\" frame=\"\(frame)\"")
+        let actionDesc = actions.isEmpty ? "none" : actions.joined(separator: ",")
+        let titleDesc = title.isEmpty ? "Untitled Window" : title
+        let bundleDesc = bundleIdentifier ?? "unknown"
+        let roleDesc = role ?? "unknown"
+        logger.log(
+            "focused_window_detected pid=\(pid) bundle_id=\"\(bundleDesc)\" "
+                + "app=\"\(appName)\" title=\"\(titleDesc)\" role=\"\(roleDesc)\" "
+                + "actions=\"\(actionDesc)\" frame=\"\(frame)\""
+        )
 
         let snapshot = AXWindowSnapshot(
             id: UUID(),
@@ -198,10 +206,9 @@ final class AXWindowProvider: WindowProviding {
                 logger.log("focused_window_fallback source=main_window")
                 return mainWindow
             }
-            if let windows: [AXUIElement] = try? copyAttribute(kAXWindowsAttribute, from: appElement),
-               let firstWindow = windows.first
-            {
-                logger.log("focused_window_fallback source=first_window count=\(windows.count)")
+            let windows: [AXUIElement]? = try? copyAttribute(kAXWindowsAttribute, from: appElement)
+            if let firstWindow = windows?.first {
+                logger.log("focused_window_fallback source=first_window count=\(windows?.count ?? 0)")
                 return firstWindow
             }
             throw AXWindowProviderError.focusedWindowUnavailable(focusedWindowError)
@@ -224,17 +231,24 @@ final class AXWindowProvider: WindowProviding {
 
         guard positionError == .success,
               sizeError == .success,
-              let positionAXValue = positionValue,
-              let sizeAXValue = sizeValue
+              let positionValue,
+              let sizeValue,
+              CFGetTypeID(positionValue) == AXValueGetTypeID(),
+              CFGetTypeID(sizeValue) == AXValueGetTypeID()
         else {
-            logger.log("focused_window_failed stage=frame position_error=\(describe(positionError)) size_error=\(describe(sizeError))")
+            logger.log(
+                "focused_window_failed stage=frame "
+                    + "position_error=\(describe(positionError)) size_error=\(describe(sizeError))"
+            )
             throw AXWindowProviderError.frameUnavailable(positionError == .success ? sizeError : positionError)
         }
 
+        let positionAXValue: AXValue = unsafeBitCast(positionValue, to: AXValue.self)
+        let sizeAXValue: AXValue = unsafeBitCast(sizeValue, to: AXValue.self)
         var position = CGPoint.zero
         var size = CGSize.zero
-        guard AXValueGetValue(positionAXValue as! AXValue, .cgPoint, &position),
-              AXValueGetValue(sizeAXValue as! AXValue, .cgSize, &size)
+        guard AXValueGetValue(positionAXValue, .cgPoint, &position),
+              AXValueGetValue(sizeAXValue, .cgSize, &size)
         else {
             logger.log("focused_window_failed stage=frame_value_decode")
             throw AXWindowProviderError.frameUnavailable(.failure)
@@ -260,7 +274,9 @@ final class AXWindowProvider: WindowProviding {
             return "pid=unknown bundle_id=\"unknown\" app=\"unknown\" pid_error=\(describe(pidError))"
         }
         let runningApp = NSRunningApplication(processIdentifier: pid)
-        return "pid=\(pid) bundle_id=\"\(runningApp?.bundleIdentifier ?? "unknown")\" app=\"\(runningApp?.localizedName ?? "Unknown App")\""
+        let bundleID = runningApp?.bundleIdentifier ?? "unknown"
+        let appName = runningApp?.localizedName ?? "Unknown App"
+        return "pid=\(pid) bundle_id=\"\(bundleID)\" app=\"\(appName)\""
     }
 
     private func describe(_ error: AXError) -> String {
@@ -270,11 +286,21 @@ final class AXWindowProvider: WindowProviding {
     private func fallbackFocusedApplication(after error: AXError) throws -> AXUIElement {
         logger.log("focused_app_fallback_requested previous_error=\(describe(error))")
         if let frontmost = Self.externalFrontmostApplication() {
-            logger.log("focused_app_fallback source=frontmost pid=\(frontmost.processIdentifier) bundle_id=\"\(frontmost.bundleIdentifier ?? "unknown")\" app=\"\(frontmost.localizedName ?? "Unknown App")\"")
+            let bundleID = frontmost.bundleIdentifier ?? "unknown"
+            let appName = frontmost.localizedName ?? "Unknown App"
+            logger.log(
+                "focused_app_fallback source=frontmost pid=\(frontmost.processIdentifier) "
+                    + "bundle_id=\"\(bundleID)\" app=\"\(appName)\""
+            )
             return AXUIElementCreateApplication(frontmost.processIdentifier)
         }
         if let lastExternalFrontmostApplication {
-            logger.log("focused_app_fallback source=last_external pid=\(lastExternalFrontmostApplication.processIdentifier) bundle_id=\"\(lastExternalFrontmostApplication.bundleIdentifier ?? "unknown")\" app=\"\(lastExternalFrontmostApplication.localizedName ?? "Unknown App")\"")
+            let bundleID = lastExternalFrontmostApplication.bundleIdentifier ?? "unknown"
+            let appName = lastExternalFrontmostApplication.localizedName ?? "Unknown App"
+            logger.log(
+                "focused_app_fallback source=last_external pid=\(lastExternalFrontmostApplication.processIdentifier) "
+                    + "bundle_id=\"\(bundleID)\" app=\"\(appName)\""
+            )
             return AXUIElementCreateApplication(lastExternalFrontmostApplication.processIdentifier)
         }
         throw AXWindowProviderError.focusedApplicationUnavailable(error)

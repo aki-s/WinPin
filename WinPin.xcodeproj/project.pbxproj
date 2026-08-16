@@ -24,6 +24,12 @@
 		0D70E1112C00000100A00001 /* PinManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D70E0112C00000100A00001 /* PinManagerTests.swift */; };
 		0D70E1122C00000100A00001 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0D70E0122C00000100A00001 /* Assets.xcassets */; };
 		0D70E1132C00000100A00001 /* AppIcon.icns in Resources */ = {isa = PBXBuildFile; fileRef = 0D70E0132C00000100A00001 /* AppIcon.icns */; };
+		0D70E1142C00000100A00001 /* PinnedWindowMenuItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D70E0142C00000100A00001 /* PinnedWindowMenuItemView.swift */; };
+		0D70E1152C00000100A00001 /* TestMocks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D70E0152C00000100A00001 /* TestMocks.swift */; };
+		0D70E1162C00000100A00001 /* WinPinRuntimeSpecTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D70E0162C00000100A00001 /* WinPinRuntimeSpecTests.swift */; };
+		0D70E1172C00000100A00001 /* AXWindowProviderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D70E0172C00000100A00001 /* AXWindowProviderTests.swift */; };
+		0D70E1182C00000100A00001 /* HotKeyManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D70E0182C00000100A00001 /* HotKeyManagerTests.swift */; };
+		0D70E1192C00000100A00001 /* PinManagerMaintenanceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D70E0192C00000100A00001 /* PinManagerMaintenanceTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -57,6 +63,12 @@
 		0D70E0112C00000100A00001 /* PinManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PinManagerTests.swift; sourceTree = "<group>"; };
 		0D70E0122C00000100A00001 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		0D70E0132C00000100A00001 /* AppIcon.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = AppIcon.icns; sourceTree = "<group>"; };
+		0D70E0142C00000100A00001 /* PinnedWindowMenuItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PinnedWindowMenuItemView.swift; sourceTree = "<group>"; };
+		0D70E0152C00000100A00001 /* TestMocks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestMocks.swift; sourceTree = "<group>"; };
+		0D70E0162C00000100A00001 /* WinPinRuntimeSpecTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WinPinRuntimeSpecTests.swift; sourceTree = "<group>"; };
+		0D70E0172C00000100A00001 /* AXWindowProviderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AXWindowProviderTests.swift; sourceTree = "<group>"; };
+		0D70E0182C00000100A00001 /* HotKeyManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotKeyManagerTests.swift; sourceTree = "<group>"; };
+		0D70E0192C00000100A00001 /* PinManagerMaintenanceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PinManagerMaintenanceTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -98,6 +110,7 @@
 				0D70E0072C00000100A00001 /* BorderOverlayManager.swift */,
 				0D70E0082C00000100A00001 /* HotKeyManager.swift */,
 				0D70E0092C00000100A00001 /* MenuBarController.swift */,
+				0D70E0142C00000100A00001 /* PinnedWindowMenuItemView.swift */,
 				0D70E00B2C00000100A00001 /* AppPreferences.swift */,
 				0D70E00C2C00000100A00001 /* SettingsWindowController.swift */,
 				0D70E00D2C00000100A00001 /* AppLogger.swift */,
@@ -123,6 +136,11 @@
 			isa = PBXGroup;
 			children = (
 				0D70E0112C00000100A00001 /* PinManagerTests.swift */,
+				0D70E0192C00000100A00001 /* PinManagerMaintenanceTests.swift */,
+				0D70E0172C00000100A00001 /* AXWindowProviderTests.swift */,
+				0D70E0182C00000100A00001 /* HotKeyManagerTests.swift */,
+				0D70E0162C00000100A00001 /* WinPinRuntimeSpecTests.swift */,
+				0D70E0152C00000100A00001 /* TestMocks.swift */,
 			);
 			path = WinPinTests;
 			sourceTree = "<group>";
@@ -227,6 +245,7 @@
 				0D70E1072C00000100A00001 /* BorderOverlayManager.swift in Sources */,
 				0D70E1082C00000100A00001 /* HotKeyManager.swift in Sources */,
 				0D70E1092C00000100A00001 /* MenuBarController.swift in Sources */,
+				0D70E1142C00000100A00001 /* PinnedWindowMenuItemView.swift in Sources */,
 				0D70E10A2C00000100A00001 /* AppPreferences.swift in Sources */,
 				0D70E10B2C00000100A00001 /* SettingsWindowController.swift in Sources */,
 				0D70E10C2C00000100A00001 /* AppLogger.swift in Sources */,
@@ -241,6 +260,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				0D70E1112C00000100A00001 /* PinManagerTests.swift in Sources */,
+				0D70E1192C00000100A00001 /* PinManagerMaintenanceTests.swift in Sources */,
+				0D70E1172C00000100A00001 /* AXWindowProviderTests.swift in Sources */,
+				0D70E1182C00000100A00001 /* HotKeyManagerTests.swift in Sources */,
+				0D70E1162C00000100A00001 /* WinPinRuntimeSpecTests.swift in Sources */,
+				0D70E1152C00000100A00001 /* TestMocks.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
