@@ -167,12 +167,12 @@ final class HotKeyManager {
     }
 
     #if DEBUG
-    func simulateHotKeyPressForTesting() {
-        triggerHotKey()
-    }
+        func simulateHotKeyPressForTesting() {
+            triggerHotKey()
+        }
 
-    func simulateHotKeyReleaseForTesting() {
-        releaseHotKey()
-    }
+        func simulateHotKeyReleaseForTesting() {
+            releaseHotKey()
+        }
     #endif
 }

@@ -58,7 +58,8 @@ final class AXWindowProvider: WindowProviding {
             queue: .main
         ) { [weak self] notification in
             guard let app = notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication,
-                  !Self.isWinPin(app) else {
+                  !Self.isWinPin(app)
+            else {
                 return
             }
             self?.lastExternalFrontmostApplication = app
@@ -77,7 +78,7 @@ final class AXWindowProvider: WindowProviding {
         do {
             focusedApp = try copyAttribute(kAXFocusedApplicationAttribute, from: systemWide)
             logger.log("focused_app_detected source=system_wide \(describeApplication(focusedApp))")
-        } catch AXWindowProviderError.focusedApplicationUnavailable(let error) {
+        } catch let AXWindowProviderError.focusedApplicationUnavailable(error) {
             focusedApp = try fallbackFocusedApplication(after: error)
         }
 
@@ -192,7 +193,7 @@ final class AXWindowProvider: WindowProviding {
     private func focusedWindowElement(from appElement: AXUIElement) throws -> AXUIElement {
         do {
             return try copyAttribute(kAXFocusedWindowAttribute, from: appElement)
-        } catch AXWindowProviderError.focusedWindowUnavailable(let focusedWindowError) {
+        } catch let AXWindowProviderError.focusedWindowUnavailable(focusedWindowError) {
             if let mainWindow: AXUIElement = try? copyAttribute(kAXMainWindowAttribute, from: appElement) {
                 logger.log("focused_window_fallback source=main_window")
                 return mainWindow
@@ -223,7 +224,8 @@ final class AXWindowProvider: WindowProviding {
         guard positionError == .success,
               sizeError == .success,
               let positionAXValue = positionValue,
-              let sizeAXValue = sizeValue else {
+              let sizeAXValue = sizeValue
+        else {
             logger.log("focused_window_failed stage=frame position_error=\(describe(positionError)) size_error=\(describe(sizeError))")
             throw AXWindowProviderError.frameUnavailable(positionError == .success ? sizeError : positionError)
         }
@@ -231,7 +233,8 @@ final class AXWindowProvider: WindowProviding {
         var position = CGPoint.zero
         var size = CGSize.zero
         guard AXValueGetValue(positionAXValue as! AXValue, .cgPoint, &position),
-              AXValueGetValue(sizeAXValue as! AXValue, .cgSize, &size) else {
+              AXValueGetValue(sizeAXValue as! AXValue, .cgSize, &size)
+        else {
             logger.log("focused_window_failed stage=frame_value_decode")
             throw AXWindowProviderError.frameUnavailable(.failure)
         }
@@ -242,7 +245,8 @@ final class AXWindowProvider: WindowProviding {
     private func actionNames(for element: AXUIElement) -> [String] {
         var value: CFArray?
         guard AXUIElementCopyActionNames(element, &value) == .success,
-              let actionNames = value as? [String] else {
+              let actionNames = value as? [String]
+        else {
             return []
         }
         return actionNames.sorted()

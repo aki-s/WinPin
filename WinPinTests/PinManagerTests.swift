@@ -1,6 +1,6 @@
 import ApplicationServices
-import XCTest
 @testable import WinPin
+import XCTest
 
 final class PinManagerTests: XCTestCase {
     func testPinShowsOverlayWithoutImmediateRefresh() {

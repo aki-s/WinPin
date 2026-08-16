@@ -93,15 +93,15 @@ lint: lint-unused lint-format
 
 .PHONY: lint-fix
 lint-fix:
-	swiftlint lint --fix --cache-path .build/swiftlint-cache --exclude .build,build,.goreleaser,dist
+	swiftlint lint --fix --cache-path .build/swiftlint-cache WinPin WinPinTests
 
 .PHONY: format
 format:
-	swiftformat . --exclude .build,build,.goreleaser,dist
-	swiftlint lint --fix --cache-path .build/swiftlint-cache --exclude .build,build,.goreleaser,dist
+	swiftformat WinPin WinPinTests
+	swiftlint lint --fix --cache-path .build/swiftlint-cache WinPin WinPinTests
 
 .PHONY: fix
-fix: lint-fix format
+fix: format
 
 ## ----------------------------------------------------------------
 ## run & restart

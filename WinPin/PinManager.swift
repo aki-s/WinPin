@@ -4,8 +4,8 @@ import ApplicationServices
 final class PinManager {
     enum TriggerSource: String {
         case hotKey = "hotkey"
-        case menu = "menu"
-        case unknown = "unknown"
+        case menu
+        case unknown
     }
 
     enum MovePlacement {
@@ -117,7 +117,8 @@ final class PinManager {
     func movePinnedWindow(id: UUID, relativeTo targetID: UUID, placement: MovePlacement) {
         guard id != targetID,
               let currentIndex = pinnedWindows.firstIndex(where: { $0.id == id }),
-              let targetIndex = pinnedWindows.firstIndex(where: { $0.id == targetID }) else {
+              let targetIndex = pinnedWindows.firstIndex(where: { $0.id == targetID })
+        else {
             return
         }
 
@@ -326,7 +327,8 @@ final class PinManager {
         }
 
         guard !raiseBackoffState.isBackedOff,
-              raiseBackoffState.consecutiveSuccessCount >= Constants.maxConsecutiveSuccessfulRaiseSequences else {
+              raiseBackoffState.consecutiveSuccessCount >= Constants.maxConsecutiveSuccessfulRaiseSequences
+        else {
             return
         }
 

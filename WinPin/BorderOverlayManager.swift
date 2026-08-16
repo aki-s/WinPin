@@ -83,14 +83,21 @@ private final class BorderPanel: NSPanel {
         isReleasedWhenClosed = false
     }
 
-    override var canBecomeKey: Bool { false }
-    override var canBecomeMain: Bool { false }
+    override var canBecomeKey: Bool {
+        false
+    }
+
+    override var canBecomeMain: Bool {
+        false
+    }
 }
 
 private final class BorderView: NSView {
-    override var isOpaque: Bool { false }
+    override var isOpaque: Bool {
+        false
+    }
 
-    override func draw(_ dirtyRect: NSRect) {
+    override func draw(_: NSRect) {
         NSColor.systemYellow.setStroke()
         let rect = bounds.insetBy(dx: OverlayConfiguration.borderWidth / 2, dy: OverlayConfiguration.borderWidth / 2)
         let path = NSBezierPath(rect: rect)

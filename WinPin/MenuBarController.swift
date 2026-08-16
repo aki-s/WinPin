@@ -286,7 +286,7 @@ final class MenuBarController: NSObject {
         }
 
         var pinnedItemsByID: [UUID: NSMenuItem] = [:]
-        for item in menu.items[insertionIndex..<sectionEndIndex] {
+        for item in menu.items[insertionIndex ..< sectionEndIndex] {
             guard let id = item.representedObject as? UUID else {
                 continue
             }
@@ -342,6 +342,7 @@ private final class PinnedWindowMenuItemView: NSView, NSDraggingSource {
             needsDisplay = true
         }
     }
+
     private var dropPlacement: PinManager.MovePlacement? {
         didSet {
             needsDisplay = true
@@ -398,7 +399,7 @@ private final class PinnedWindowMenuItemView: NSView, NSDraggingSource {
     }
 
     @available(*, unavailable)
-    required init?(coder: NSCoder) {
+    required init?(coder _: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
 
@@ -471,7 +472,7 @@ private final class PinnedWindowMenuItemView: NSView, NSDraggingSource {
         cursor(for: event).set()
     }
 
-    override func mouseExited(with event: NSEvent) {
+    override func mouseExited(with _: NSEvent) {
         isHovered = false
         NSCursor.arrow.set()
     }
@@ -513,7 +514,7 @@ private final class PinnedWindowMenuItemView: NSView, NSDraggingSource {
         updateDropPlacement(sender)
     }
 
-    override func draggingExited(_ sender: NSDraggingInfo?) {
+    override func draggingExited(_: NSDraggingInfo?) {
         dropPlacement = nil
     }
 
@@ -523,7 +524,8 @@ private final class PinnedWindowMenuItemView: NSView, NSDraggingSource {
         }
 
         guard let draggedID = draggedWindowID(from: sender),
-              draggedID != windowID else {
+              draggedID != windowID
+        else {
             return false
         }
 
@@ -549,11 +551,11 @@ private final class PinnedWindowMenuItemView: NSView, NSDraggingSource {
         NSRect(x: 0, y: y, width: bounds.width, height: Layout.dropIndicatorHeight).fill()
     }
 
-    func draggingSession(_ session: NSDraggingSession, sourceOperationMaskFor context: NSDraggingContext) -> NSDragOperation {
+    func draggingSession(_: NSDraggingSession, sourceOperationMaskFor _: NSDraggingContext) -> NSDragOperation {
         .move
     }
 
-    func ignoreModifierKeys(for session: NSDraggingSession) -> Bool {
+    func ignoreModifierKeys(for _: NSDraggingSession) -> Bool {
         true
     }
 
@@ -563,7 +565,8 @@ private final class PinnedWindowMenuItemView: NSView, NSDraggingSource {
 
     private func updateDropPlacement(_ sender: NSDraggingInfo) -> NSDragOperation {
         guard let draggedID = draggedWindowID(from: sender),
-              draggedID != windowID else {
+              draggedID != windowID
+        else {
             dropPlacement = nil
             return []
         }

@@ -28,14 +28,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     )
 
-    func applicationWillFinishLaunching(_ notification: Notification) {
+    func applicationWillFinishLaunching(_: Notification) {
         NSApp.applicationIconImage = Self.bundleAppIcon() ?? AppIconFactory.makeApplicationIcon()
         let policy: NSApplication.ActivationPolicy = LaunchMode.shouldShowDock ? .regular : .accessory
         AppLogger.shared.log("applicationWillFinishLaunching activationPolicy=\(policy.rawValue)")
         NSApp.setActivationPolicy(policy)
     }
 
-    func applicationDidFinishLaunching(_ notification: Notification) {
+    func applicationDidFinishLaunching(_: Notification) {
         AppLogger.shared.log("applicationDidFinishLaunching args=\(CommandLine.arguments) showDockPreference=\(AppPreferences.showDockIcon)")
         installMainMenu()
         configureSettingsWindow()
@@ -48,18 +48,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         AppLogger.shared.log("applicationDidFinishLaunching completed activationPolicy=\(NSApp.activationPolicy().rawValue)")
     }
 
-    func applicationWillTerminate(_ notification: Notification) {
+    func applicationWillTerminate(_: Notification) {
         AppLogger.shared.log("applicationWillTerminate")
         hotKeyManager.unregister()
         pinManager.unpinAll()
     }
 
-    func applicationSupportsSecureRestorableState(_ app: NSApplication) -> Bool {
+    func applicationSupportsSecureRestorableState(_: NSApplication) -> Bool {
         // WinPin does not persist custom restorable state, so explicitly opt in to AppKit's secure restoration path.
         true
     }
 
-    func applicationDockMenu(_ sender: NSApplication) -> NSMenu? {
+    func applicationDockMenu(_: NSApplication) -> NSMenu? {
         AppLogger.shared.log("applicationDockMenu requested")
         let menu = NSMenu()
 
