@@ -110,15 +110,8 @@ jobs:
           name: win-pin.org.rb
           path: dist/homebrew/Casks/win-pin.rb
           archive: false
-      ##;; Skip collision of the rules Cask/ArrayAlphabetization, Layout/ArrayAlignment.
-      ##; Infinite loop detected in /home/runner/work/WinPin/WinPin/dist/homebrew/Casks/win-pin.rb and caused by Layout/ArrayAlignment,
-      ##; Layout/FirstArrayElementIndentation -> Layout/ArrayAlignment,
-      ##; Cask/ArrayAlphabetization -> Layout/ArrayAlignment,
-      ##; Layout/FirstArrayElementIndentation -> Layout/ArrayAlignment,Cask/ArrayAlphabetization
-      - name: "format and lint cask file (except Cask/ArrayAlphabetization)"
-        run: HOMEBREW_DEVELOPER=1 brew style -d --except-cops=Cask/ArrayAlphabetization --cask --fix  ./dist/homebrew/Casks/win-pin.rb
-      - name: "format and lint cask file (except Layout/ArrayAlignment)"
-        run: HOMEBREW_DEVELOPER=1 brew style -d --except-cops=Layout/ArrayAlignment --cask --fix  ./dist/homebrew/Casks/win-pin.rb
+      - name: "format and lint cask file"
+        run: HOMEBREW_DEVELOPER=1 brew style -d --cask --fix ./dist/homebrew/Casks/win-pin.rb
       ##; It looks there's no rubocop.yml, although it exists in localhost(Homebrew 6.0.6-80-g72ba737).
       - name: "[DEBUG] Upload rubocop.yml"
         if: ${{ !env.ACT }}
