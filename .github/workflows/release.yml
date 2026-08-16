@@ -102,34 +102,8 @@ jobs:
         run: |
           brew --version
           brew --prefix
-      - name: "[DEBUG] Upload win-pin.rb (org)"
-        if: ${{ !env.ACT }}
-        # https://github.com/actions/upload-artifact/commit/043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
-        with:
-          name: win-pin.org.rb
-          path: dist/homebrew/Casks/win-pin.rb
-          archive: false
       - name: "format and lint cask file"
         run: HOMEBREW_DEVELOPER=1 brew style -d --cask --fix ./dist/homebrew/Casks/win-pin.rb
       ##; It looks there's no rubocop.yml, although it exists in localhost(Homebrew 6.0.6-80-g72ba737).
-      - name: "[DEBUG] Upload rubocop.yml"
-        if: ${{ !env.ACT }}
-        # https://github.com/actions/upload-artifact/commit/043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
-        with:
-          name: rubocop.yml
-          path: /opt/homebrew/Library/.rubocop.yml
-          archive: false
-
-
-      - name: "[DEBUG] Upload win-pin.rb (formatted)"
-        if: ${{ !env.ACT }}
-        # https://github.com/actions/upload-artifact/commit/043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
-        with:
-          name: win-pin.formatted.rb
-          path: dist/homebrew/Casks/win-pin.rb
-          archive: false
       - name: Show GoReleaser artifacts
         run: echo '${{ steps.goreleaser_release.outputs.artifacts }}'
