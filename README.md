@@ -1,4 +1,4 @@
-This doc is for `WinPin` version 0.0.1 (stable version)
+This doc is for `WinPin` version 0.0.2 (stable version)
 
 # About
 
@@ -63,6 +63,16 @@ make fix
 
 ### Release Workflow
 
+#### 0. Setup
+
+```sh
+brew install goreleaser act gh
+```
+
+Register PAT secret named `HOMEBREW_TAP_GITHUB_TOKEN` to access ${owner}/homebrew-tap at the artifact repository
+
+https://github.com/${owner}/WinPin/settings/secrets/actions
+
 #### 1. Local Verification (Dry-Run with GoReleaser)
 
 ```sh
@@ -79,8 +89,8 @@ make goreleaser-dryrun APP_VERSION=0.0.1
 #### 2. Local Release & Draft PR to homebrew-tap
 
 ```sh
-# Create GitHub Release on aki-s/WinPin and create a draft PR in aki-s/homebrew-tap
-GITHUB_TOKEN="<your-github-token>" \
+# Create GitHub Release on ${owner}/WinPin and create a draft PR in ${owner}/homebrew-tap
+GITHUB_TOKEN="$(gh auth token)" \
 HOMEBREW_TAP_GITHUB_TOKEN="<your-pat-for-homebrew-tap>" \
 make goreleaser-release APP_VERSION=0.0.1
 ```
