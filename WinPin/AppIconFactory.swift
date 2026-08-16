@@ -15,7 +15,7 @@ enum AppIconFactory {
 
         let attributes: [NSAttributedString.Key: Any] = [
             .font: NSFont.systemFont(ofSize: size * 0.72),
-            .paragraphStyle: paragraphStyle
+            .paragraphStyle: paragraphStyle,
         ]
         let attributedString = NSAttributedString(string: symbol, attributes: attributes)
         let textSize = attributedString.size()

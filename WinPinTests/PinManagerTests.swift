@@ -202,7 +202,7 @@ final class PinManagerTests: XCTestCase {
 
         XCTAssertEqual(observedMessages, [
             "Pinned App Pinned - Pinned.",
-            "No pinned windows."
+            "No pinned windows.",
         ])
     }
 
@@ -247,7 +247,7 @@ final class PinManagerTests: XCTestCase {
 
         XCTAssertEqual(logger.messages, [
             "pin_requested source=hotkey",
-            "pin_failed reason=accessibility_permission_missing source=hotkey"
+            "pin_failed reason=accessibility_permission_missing source=hotkey",
         ])
     }
 
@@ -351,7 +351,7 @@ final class PinManagerTests: XCTestCase {
         XCTAssertEqual(provider.raisedIDs, [
             first.id, second.id,
             first.id, second.id,
-            first.id, second.id
+            first.id, second.id,
         ])
         XCTAssertTrue(logger.messages.contains {
             $0.contains("pin_raise_backoff_started")
@@ -418,7 +418,7 @@ final class PinManagerTests: XCTestCase {
             first.id, second.id,
             first.id, second.id,
             first.id, second.id,
-            first.id, second.id
+            first.id, second.id,
         ])
         XCTAssertTrue(logger.messages.contains {
             $0.contains("pin_raise_backoff_resumed reason=frontmost_application_changed")
@@ -472,7 +472,7 @@ final class PinManagerTests: XCTestCase {
             first.id, second.id,
             first.id, second.id,
             first.id, second.id,
-            first.id, second.id
+            first.id, second.id,
         ])
         XCTAssertTrue(logger.messages.contains {
             $0.contains("pin_raise_backoff_resumed reason=window_snapshot_changed")
@@ -711,7 +711,7 @@ final class WinPinRuntimeSpecTests: XCTestCase {
         XCTAssertEqual(menu?.items.map(\.title), [
             AppMenuTitle.dockSettings,
             AppMenuTitle.dockMenuBarVisibilityToggle,
-            AppMenuTitle.quit
+            AppMenuTitle.quit,
         ])
     }
 

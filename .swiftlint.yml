@@ -1,0 +1,7 @@
+opt_in_rules:
+  - trailing_comma
+
+trailing_comma:
+  # Because SwiftFormat requests trailing comman exists always.
+  mandatory_comma: true
+

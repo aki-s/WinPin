@@ -199,7 +199,8 @@ final class AXWindowProvider: WindowProviding {
                 return mainWindow
             }
             if let windows: [AXUIElement] = try? copyAttribute(kAXWindowsAttribute, from: appElement),
-               let firstWindow = windows.first {
+               let firstWindow = windows.first
+            {
                 logger.log("focused_window_fallback source=first_window count=\(windows.count)")
                 return firstWindow
             }

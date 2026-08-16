@@ -276,7 +276,8 @@ final class MenuBarController: NSObject {
 
         var insertionIndex = headerIndex + 1
         if menu.items.indices.contains(insertionIndex),
-           menu.items[insertionIndex].title == MenuTitle.unpinAll {
+           menu.items[insertionIndex].title == MenuTitle.unpinAll
+        {
             insertionIndex += 1
         }
 

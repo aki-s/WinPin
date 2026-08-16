@@ -74,10 +74,10 @@ test:
 .PHONY: lint-format
 lint-format:
 	swiftformat --version
-	swiftformat --lint . --exclude .build,build,.goreleaser,dist --reporter github-actions-log
+	swiftformat --lint --reporter github-actions-log WinPin WinPinTests
 
 	swiftlint --version
-	swiftlint lint --strict --cache-path .build/swiftlint-cache --exclude .build,build,.goreleaser,dist
+	swiftlint lint --strict --cache-path .build/swiftlint-cache  WinPin WinPinTests
 
 .PHONY: lint-unused
 lint-unused:
@@ -93,15 +93,14 @@ lint: lint-unused lint-format
 
 .PHONY: lint-fix
 lint-fix:
-	swiftlint lint --fix --cache-path .build/swiftlint-cache WinPin WinPinTests
+	swiftlint lint --strict --fix --cache-path .build/swiftlint-cache WinPin WinPinTests
 
 .PHONY: format
 format:
 	swiftformat WinPin WinPinTests
-	swiftlint lint --fix --cache-path .build/swiftlint-cache WinPin WinPinTests
 
 .PHONY: fix
-fix: format
+fix: lint-fix format
 
 ## ----------------------------------------------------------------
 ## run & restart

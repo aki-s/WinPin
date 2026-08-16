@@ -56,7 +56,7 @@ final class SettingsWindowController: NSWindowController {
 
             explanationLabel.topAnchor.constraint(equalTo: showDockCheckbox.bottomAnchor, constant: 12),
             explanationLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 24),
-            explanationLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -24)
+            explanationLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -24),
         ])
     }
 
