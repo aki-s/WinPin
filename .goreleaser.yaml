@@ -126,8 +126,9 @@ homebrew_casks:
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
       # This might require a personal access token.
       pull_request:
+        #; Do not use 'repository' section to create PR, because formatting Casks/*.rb cannot be cut in.
         # Whether to enable it or not.
-        enabled: true
+        enabled: false
 
         # Whether to open the PR as a draft or not.
         draft: true
