@@ -1,4 +1,4 @@
-This doc is for `WinPin` version 0.0.2 (stable version)
+This doc is for `WinPin` version 0.0.5 (stable version)
 
 # About
 
@@ -61,41 +61,33 @@ make lint
 make fix
 ```
 
-### Release Workflow
+### Release Workflow (way1 / from GitHubAction)
 
-#### 0. Setup
+1. Issue tag
+2. Run action `release.yml`
+
+### Release Workflow (way2 / from localhost)
+
+#### 1. Install CLIs
 
 ```sh
 brew install goreleaser act gh
 ```
 
+#### 1. Register PAT for ${owner}/homebrew-tap
+
 Register PAT secret named `HOMEBREW_TAP_GITHUB_TOKEN` to access ${owner}/homebrew-tap at the artifact repository
 
 https://github.com/${owner}/WinPin/settings/secrets/actions
 
-#### 1. Local Verification (Dry-Run with GoReleaser)
+#### 2. Tag version, then release
 
 ```sh
-# Build arm64 and x86_64 Release binaries for version 0.0.1
-make build-all-arch APP_VERSION=0.0.1
-
-# Prepare artifacts for GoReleaser
-make goreleaser-prep
-
-# Test packaging and cask generation locally (Dry-run without publishing)
-make goreleaser-dryrun APP_VERSION=0.0.1
+APP_VERSION=1.0.0 # assume version is 1.0.0
+export HOMEBREW_TAP_GITHUB_TOKEN="github_pat_...."
+git tag ${APP_VERSION}; git push -u origin ${APP_VERSION};  TAG=${APP_VERSION}  ./scripts/localhost-act-release.sh
 ```
 
-#### 2. Local Release & Draft PR to homebrew-tap
+#### 3. Check PR created to ${owner}/homebrew-tap
 
-```sh
-# Create GitHub Release on ${owner}/WinPin and create a draft PR in ${owner}/homebrew-tap
-GITHUB_TOKEN="$(gh auth token)" \
-HOMEBREW_TAP_GITHUB_TOKEN="<your-pat-for-homebrew-tap>" \
-make goreleaser-release APP_VERSION=0.0.1
-```
-
-#### 3. GitHub Actions Release
-
-Trigger the `goreleaser` workflow via GitHub Actions (`workflow_dispatch`) by specifying the release tag (e.g., `0.0.1`).
-Ensure `HOMEBREW_TAP_GITHUB_TOKEN` secret is configured in the repository settings.
+https://github.com/${owner}/homebrew-tap/pull/

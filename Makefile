@@ -1,5 +1,5 @@
 ARCH ?= arm64
-APP_VERSION ?= 0.0.1
+APP_VERSION ?= 0.0.5
 VERSION_NUM := $(patsubst v%,%,$(APP_VERSION))
 
 ## ----------------------------------------------------------------
@@ -50,9 +50,12 @@ goreleaser-prep:
 goreleaser-dryrun:
 	GORELEASER_CURRENT_TAG=$(APP_VERSION) goreleaser release --snapshot --clean --skip=publish,announce,validate
 
-.PHONY: goreleaser-release
-goreleaser-release:
-	GORELEASER_CURRENT_TAG=$(APP_VERSION) goreleaser release --clean
+#; GoReleaser emits unacceptable format of cask file (at least for the order of 'on_macos > {on_intel,on_arm}' block),
+#; so we don't use it.
+#;
+# .PHONY: goreleaser-release
+# goreleaser-release:
+# 	GITHUB_TOKEN=$(gh auth token) GORELEASER_CURRENT_TAG=$(APP_VERSION) goreleaser release --clean --snapshot --verbose
 
 ## ----------------------------------------------------------------
 ## test
