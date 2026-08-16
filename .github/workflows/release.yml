@@ -1,0 +1,142 @@
+# ref. https://github.com/actions/create-release
+
+---
+name: goreleaser
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag (e.g., 0.0.1)'
+        required: true
+        type: string
+  #; Not all tags are to be released, so we don't use 'push' trigger.
+  # push:
+  #   tags:
+  #     - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        arch: [arm64, x86_64]
+    # ref. .github/workflows/lint.yml
+    runs-on: macos-26
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          ref: refs/tags/${{ inputs.tag }}
+          fetch-depth: 0
+      - name: build
+        run: |
+          make build-app ARCH=${{ matrix.arch }} APP_VERSION=${{ inputs.tag }}
+      # https://github.com/actions/upload-artifact#inputs
+      - name: Upload artifact
+        uses: ./.github/actions/upload-artifact/
+        with:
+          name: WinPin_${{ matrix.arch }}
+          path: .build/${{ matrix.arch }}/
+          if-no-files-found: error
+          retention-days: 1
+          overwrite: true
+          include-hidden-files: false
+
+  goreleaser:
+    needs: build
+    runs-on: macos-26
+    steps:
+      - name: Checkout
+        # https://github.com/actions/checkout/commit/9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: refs/tags/${{ inputs.tag }}
+          fetch-depth: 0
+      - name: Set up Go
+        # https://github.com/actions/setup-go/commit/924ae3a1cded613372ab5595356fb5720e22ba16
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+        with:
+          go-version: "1.26"
+          cache: true # cache is only effective for golang projects.
+          # Path to dependency files for caching
+          cache-dependency-path: ".github/workflows/dummy/go.mod"
+      - name: Download artifacts
+        uses: ./.github/actions/download-artifact/
+      - name: "[DEBUG] Display structure of downloaded files"
+        run: find .goreleaser/ -type f
+      - name: Install GoReleaser
+        uses: goreleaser/goreleaser-action@f06c13b6b1a9625abc9e6e439d9c05a8f2190e94 #v7.2.3
+        with:
+          install-only: true
+      - name: "[DEBUG] Show GoReleaser version"
+        run: goreleaser -v
+      - name: Run GoReleaser (Prepare artifacts)
+        id: goreleaser_release
+        uses: goreleaser/goreleaser-action@f06c13b6b1a9625abc9e6e439d9c05a8f2190e94 #v7.2.3
+        with:
+          distribution: goreleaser
+          version: "~> v2"
+          args: release --clean --verbose
+          # args: release --clean --verbose --skip=announce,publish,validate
+          # args: release --verbose --skip=archive
+        env:
+          # GITHUB_TOKEN is required. ref.: https://goreleaser.com/customization/ci/actions/#token-permissions
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HOMEBREW_TAP_GITHUB_TOKEN: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
+          #; GORERELEASER_CURRENT_TAG ref. https://goreleaser.com/resources/cookbooks/set-a-custom-git-tag/
+          GORELEASER_CURRENT_TAG: ${{ inputs.tag }}
+      - name: "[DEBUG] Display structure of dist files"
+        run: find dist/ -type f
+
+
+      - name: Set up Homebrew
+        id: set-up-homebrew
+        uses: Homebrew/actions/setup-homebrew@main
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          stable: true
+      - name: "[DEBUG] Check Homebrew"
+        run: |
+          brew --version
+          brew --prefix
+      - name: "[DEBUG] Upload win-pin.rb (org)"
+        if: ${{ !env.ACT }}
+        # https://github.com/actions/upload-artifact/commit/043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: win-pin.org.rb
+          path: dist/homebrew/Casks/win-pin.rb
+          archive: false
+      ##;; Skip collision of the rules Cask/ArrayAlphabetization, Layout/ArrayAlignment.
+      ##; Infinite loop detected in /home/runner/work/WinPin/WinPin/dist/homebrew/Casks/win-pin.rb and caused by Layout/ArrayAlignment,
+      ##; Layout/FirstArrayElementIndentation -> Layout/ArrayAlignment,
+      ##; Cask/ArrayAlphabetization -> Layout/ArrayAlignment,
+      ##; Layout/FirstArrayElementIndentation -> Layout/ArrayAlignment,Cask/ArrayAlphabetization
+      - name: "format and lint cask file (except Cask/ArrayAlphabetization)"
+        run: HOMEBREW_DEVELOPER=1 brew style -d --except-cops=Cask/ArrayAlphabetization --cask --fix  ./dist/homebrew/Casks/win-pin.rb
+      - name: "format and lint cask file (except Layout/ArrayAlignment)"
+        run: HOMEBREW_DEVELOPER=1 brew style -d --except-cops=Layout/ArrayAlignment --cask --fix  ./dist/homebrew/Casks/win-pin.rb
+      ##; It looks there's no rubocop.yml, although it exists in localhost(Homebrew 6.0.6-80-g72ba737).
+      - name: "[DEBUG] Upload rubocop.yml"
+        if: ${{ !env.ACT }}
+        # https://github.com/actions/upload-artifact/commit/043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: rubocop.yml
+          path: /opt/homebrew/Library/.rubocop.yml
+          archive: false
+
+
+      - name: "[DEBUG] Upload win-pin.rb (formatted)"
+        if: ${{ !env.ACT }}
+        # https://github.com/actions/upload-artifact/commit/043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: win-pin.formatted.rb
+          path: dist/homebrew/Casks/win-pin.rb
+          archive: false
+      - name: Show GoReleaser artifacts
+        run: echo '${{ steps.goreleaser_release.outputs.artifacts }}'

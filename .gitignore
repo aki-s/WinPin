@@ -4,3 +4,6 @@ xcuserdata/
 *.xcuserdata/
 *.xcuserstate
 .DS_Store
+.build/
+dist/
+.goreleaser/

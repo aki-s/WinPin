@@ -1,0 +1,140 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+# vim: set ts=2 sw=2 tw=0 fo=cnqoj
+
+version: 2
+
+project_name: win-pin
+
+builds:
+  # Use 'dummy' builds, because '- skip: true' causes the failure
+  #   in free edition of goreleaser at archives+homebrew_casks.
+  - id: arm64
+    goos:
+      - darwin
+    goarch:
+      - arm64
+    dir: .github/workflows/dummy
+    binary: dummy
+  - id: x86_64
+    goos:
+      - darwin
+    goarch:
+      - amd64
+    dir: .github/workflows/dummy
+    binary: dummy
+
+# https://goreleaser.com/customization/package/archives/
+archives:
+  - id: arm64
+    ids:
+      - arm64
+    formats: [zip]
+    name_template: >-
+      WinPin_{{ .Version }}_arm64
+    files:
+      - src: .goreleaser/WinPin_arm64/WinPin.app
+        dst: WinPin.app
+  - id: x86_64
+    ids:
+      - x86_64
+    formats: [zip]
+    name_template: >-
+      WinPin_{{ .Version }}_x86_64
+    files:
+      - src: .goreleaser/WinPin_x86_64/WinPin.app
+        dst: WinPin.app
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+
+release:
+  github:
+    owner: aki-s
+    name: WinPin
+    token: "{{ .Env.GITHUB_TOKEN }}"
+  ids:
+    - arm64
+    - x86_64
+
+# https://goreleaser.com/customization/publish/homebrew_casks/
+homebrew_casks:
+  - name: win-pin
+    # binary: "" # empty value falls back to the default value using 'name:'
+    binary: "#{appdir}/WinPin.app/Contents/MacOS/WinPin"
+    custom_block: |
+      app "WinPin.app"
+      # Only :ventura(.13) and above is supported.
+      depends_on macos: ">= :ventura"
+      binary "#{appdir}/WinPin.app/Contents/MacOS/WinPin", target: "win-pin"
+
+    # Directory inside the repository to put the cask.
+    # Default: Casks
+    directory: Casks
+    hooks: # https://goreleaser.com/customization/publish/homebrew_casks/#signing-and-notarizing
+      post:
+        # replace foo with the actual binary name
+        install: |
+          if OS.mac?
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{appdir}/WinPin.app"]
+            system_command "/usr/bin/open", args: ["#{appdir}/WinPin.app"]
+          end
+    ids:
+      - arm64
+      - x86_64
+    homepage: https://github.com/aki-s/WinPin
+    description: Per-window pinning menu bar application
+    commit_author:
+      name: github-actions
+      email: actions@github.com
+    uninstall:
+      # # issue1:  Homebrew lint
+      # # Don't use array to appease 'Cask/ArrayAlphabetization: Avoid single-element arrays by removing the []'
+      # quit: "com.akis.WinPin"
+
+      # # issue2: GoReleaser parse error
+      # # `act/tool_cache/goreleaser-action/2.17.0/arm64/goreleaser release --clean --verbose` emits the following error:
+      # error=
+      # │ yaml: unmarshal errors:
+      # │   line 91: cannot unmarshal !!str `com.aki...` into []string
+
+      quit:
+      # Intentionally duplicate values to pass issue1 and issue2.
+      - "com.akis.WinPin"
+      - "com.akis.WinPin"
+      trash:
+        - "/Applications/WinPin.app"
+
+    url:
+      template: >-
+        https://github.com/aki-s/WinPin/releases/download/{{ .Tag }}/{{ .ArtifactName }}
+    zap:
+      trash:
+      - "~/Library/Application Support/WinPin"
+      - "~/Library/Caches/com.akis.WinPin"
+      - "~/Library/Logs/WinPin/"
+      - "~/Library/Preferences/com.akis.WinPin.plist"
+
+    # Repository to push the generated files to.
+    repository:
+      owner: aki-s
+      name: homebrew-tap
+      branch: win-pin-{{ .Version }}
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+      # This might require a personal access token.
+      pull_request:
+        # Whether to enable it or not.
+        enabled: true
+
+        # Whether to open the PR as a draft or not.
+        draft: true
+
+        # Base can also be another repository, in which case the owner and name
+        # above will be used as HEAD, allowing cross-repository pull requests.
+        base:
+          owner: aki-s
+          name: homebrew-tap
+          branch: main
