@@ -94,13 +94,14 @@ jobs:
       - name: "[DEBUG] Display structure of dist files"
         run: find dist/ -type f
 
-
       - name: Set up Homebrew
         id: set-up-homebrew
-        uses: Homebrew/actions/setup-homebrew@main
+        uses: Homebrew/actions/setup-homebrew@1f8e202ffddf94def7f42f6fa3a482e821489f9c # 2026.07.10.1
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
           stable: true
+          #; If HOMEBREW_GITHUB_API_TOKEN is omitted, it is said that rate limiting is applied. 60 req / hour (per IP address).
+          # env:
+          #   HOMEBREW_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: "[DEBUG] Check Homebrew"
         run: |
           brew --version
@@ -109,19 +110,30 @@ jobs:
       - name: "format and lint cask file"
         run: HOMEBREW_DEVELOPER=1 brew style --fix ./dist/homebrew/Casks/win-pin.rb
 
-      - name: Checkout tap branch and put fixed cask file
+      - name: Checkout tap branch created by the release command of goreleaser 
+        # https://github.com/actions/checkout/commit/3d3c42e5aac5ba805825da76410c181273ba90b1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # 7.0.1
+        with:
+          repository: aki-s/homebrew-tap
+          token: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
+          # Assume this branch is created by goreleaser 'homebrew_casks.repository'. See .goreleaser.yaml
+          ref: "win-pin-${{ inputs.tag }}"
+          persist-credentials: false
+          path: tap-repo
+      # ref. As for user.email https://api.github.com/users/github-actions%5Bbot%5D
+      - name: "push updated Casks/win-pin.rb"
         run: |
-          git clone --branch "win-pin-${{ inputs.tag }}" https://x-access-token:${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}@github.com/aki-s/homebrew-tap.git tap-repo
           mkdir -p tap-repo/Casks/
-          cp ./dist/homebrew/Casks/win-pin.rb tap-repo/Casks/
+          cp ./dist/homebrew/Casks/win-pin.rb ./tap-repo/Casks/
           cd tap-repo
           git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           if ! git diff --quiet; then
             git add Casks/win-pin.rb
             git commit -m "style: fix brew style for win-pin"
-            git push origin "win-pin-${{ inputs.tag }}"
+            git push https://x-access-token:${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}@github.com/aki-s/homebrew-tap.git HEAD:win-pin-${{ inputs.tag }}
           fi
+          git status
 
       - name: Create Pull Request via GitHub CLI
         run: |
